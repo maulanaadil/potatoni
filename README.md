@@ -44,6 +44,8 @@ The pooled Prisma Postgres connection can drop mid-query ("Connection terminated
   - When a page can't load, it shows `public/offline.html`, which retries by itself when the connection returns.
   - `experimental.useOffline` (Next 16) holds failed in-app navigations until the connection returns, and `OfflineBanner` says so.
   - The worker registers in production builds only. Test it with `next build && next start`.
+  - **Launch screens:** iPhone and iPad show `public/splash/*.png` (cream background, centred app icon) while the installed app opens. Android and desktop Chrome build theirs from the manifest. The devices are listed in `src/lib/splash-screens.ts`; regenerate the images with `pnpm --filter web assets:splash`.
+  - **Launch animation:** in the installed app only, `LaunchSplash` repeats the launch screen's first frame, then presses the icon (scale 0.96) and fades out (about 300ms, `ease-out-strong`). Reduced motion gets a plain fade. Browser tabs never show it.
 - **Not indexed:** this is a private POS behind a login, so `robots.ts` disallows everything and pages send `noindex`. Link previews (WhatsApp, Telegram) still work. Flip `robots` in `src/app/layout.tsx` and `robots.ts` if a public page is added.
 - **`APP_URL` must be set when building.** Share-image URLs are baked in at build time, so set `APP_URL` (e.g. `https://potatoni.id`) in the build environment, not just at runtime.
 - The auth gate (`src/proxy.ts`) lets the manifest, robots, icons and share images load without a session.
