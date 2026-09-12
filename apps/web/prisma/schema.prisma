@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  CASHIER
+}
+
+enum Category {
+  FRIES
+  CHICKEN
+}
+
+enum ModifierType {
+  SEASONING // free, pick up to 2
+  ADDON // paid extras
+  UPGRADE // e.g. shoestring -> pom-pom
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum PaymentMethod {
+  QRIS
+  CASH
+}
+
+enum ActivitySource {
+  POS
+  DASHBOARD
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         Role       @default(ADMIN)
+  activities   Activity[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Product {
+  id         String           @id @default(cuid())
+  name       String
+  slug       String           @unique
+  category   Category
+  tagline    String?
+  imageKey   String?
+  isActive   Boolean          @default(true)
+  sortOrder  Int              @default(0)
+  variants   ProductVariant[]
+  orderItems OrderItem[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      String // S / M / L
+  grams     Int
+  price     Int // rupiah
+  isPopular Boolean @default(false)
+  sortOrder Int     @default(0)
+
+  @@unique([productId, size])
+}
+
+model Modifier {
+  id        String       @id @default(cuid())
+  name      String
+  type      ModifierType
+  price     Int          @default(0)
+  imageKey  String?
+  appliesTo Category? // null = every product
+  isActive  Boolean      @default(true)
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  code          String        @unique
+  status        OrderStatus   @default(PENDING)
+  paymentMethod PaymentMethod @default(QRIS)
+  subtotal      Int
+  total         Int
+  cashReceived  Int?
+  customerName  String?
+  note          String?
+  items         OrderItem[]
+  createdAt     DateTime      @default(now())
+  paidAt        DateTime?
+  cancelledAt   DateTime?
+
+  @@index([createdAt])
+  @@index([status])
+}
+
+model OrderItem {
+  id           String   @id @default(cuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String?
+  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  // Snapshots, so editing the menu never rewrites sales history.
+  productName  String
+  variantSize  String
+  variantGrams Int
+  modifiers    Json // [{ id, name, type, price }]
+  unitPrice    Int
+  quantity     Int
+  lineTotal    Int
+}
+
+model Purchase {
+  id          String   @id @default(cuid())
+  item        String
+  quantity    Float
+  unit        String
+  total       Int
+  supplier    String?
+  note        String?
+  purchasedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([purchasedAt])
+}
+
+model Activity {
+  id         String         @id @default(cuid())
+  action     String // e.g. order.created, purchase.deleted
+  message    String
+  source     ActivitySource
+  entityType String?
+  entityId   String?
+  meta       Json?
+  actorId    String?
+  actor      User?          @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt  DateTime       @default(now())
+
+  @@index([createdAt])
+}

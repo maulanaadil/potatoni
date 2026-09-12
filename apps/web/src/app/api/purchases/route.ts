@@ -1,0 +1,42 @@
+import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity";
+import { handler, parseBody, requireApiSession } from "@/lib/api";
+import { db } from "@/lib/db";
+import { formatRupiah, startOfJakartaDay } from "@/lib/format";
+import { purchaseInput } from "@/lib/validators";
+
+// Cashiers see today's stock purchases; admins can pass ?from=&to= (YYYY-MM-DD, WIB).
+export const GET = handler(async (request) => {
+  const session = await requireApiSession();
+  const url = new URL(request.url);
+  const isAdmin = session.role === "ADMIN";
+  const from = isAdmin && url.searchParams.get("from")
+    ? startOfJakartaDay(new Date(`${url.searchParams.get("from")}T12:00:00+07:00`))
+    : startOfJakartaDay();
+  const to = isAdmin && url.searchParams.get("to")
+    ? startOfJakartaDay(new Date(`${url.searchParams.get("to")}T12:00:00+07:00`), 1)
+    : undefined;
+
+  const purchases = await db.purchase.findMany({
+    where: { purchasedAt: { gte: from, lt: to } },
+    orderBy: { purchasedAt: "desc" },
+    take: 500,
+  });
+  return NextResponse.json({ purchases });
+});
+
+export const POST = handler(async (request) => {
+  const session = await requireApiSession();
+  const input = await parseBody(request, purchaseInput);
+  const purchase = await db.purchase.create({ data: input });
+  await logActivity({
+    action: "purchase.created",
+    message: `${session.name} bought ${purchase.quantity} ${purchase.unit} ${purchase.item} (${formatRupiah(purchase.total)})`,
+    source: session.role === "ADMIN" ? "DASHBOARD" : "POS",
+    session,
+    entityType: "purchase",
+    entityId: purchase.id,
+    meta: { total: purchase.total },
+  });
+  return NextResponse.json({ purchase }, { status: 201 });
+});
