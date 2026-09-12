@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { EmptyState, Panel } from "@/components/ui/brand";
@@ -148,7 +148,7 @@ export function VoucherManager({ campaigns: initial, baseUrl }: { campaigns: Cam
           grow.
         </EmptyState>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2">
           {campaigns.map((c) => (
             <CampaignCard key={c.id} campaign={c} url={`${baseUrl}/v/${c.slug}`} onEdit={() => setDraft(toDraft(c))} />
           ))}
@@ -288,7 +288,27 @@ export function VoucherManager({ campaigns: initial, baseUrl }: { campaigns: Cam
 
 function CampaignCard({ campaign: c, url, onEdit }: { campaign: CampaignSummary; url: string; onEdit: () => void }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const [copied, setCopied] = useState(false);
   const claimed = c.stats.issued + c.stats.redeemed;
+  const terms = [
+    `Lasts ${c.validDays} days after claiming`,
+    c.state === "not-started" && c.claimStartsOn && `opens ${formatDay(c.claimStartsOn)}`,
+    c.claimEndsOn && `claim by ${formatDay(c.claimEndsOn)}`,
+    c.quota != null && `${c.quota} vouchers`,
+  ].filter(Boolean);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  function copyLink() {
+    navigator.clipboard.writeText(url).then(
+      () => setCopied(true),
+      () => toast.error("Couldn't copy the link"),
+    );
+  }
 
   function downloadQr() {
     const el = canvas.current;
@@ -300,71 +320,77 @@ function CampaignCard({ campaign: c, url, onEdit }: { campaign: CampaignSummary;
   }
 
   return (
-    <Panel className="flex flex-col gap-4 p-4 sm:flex-row">
-      <div className="flex shrink-0 flex-col items-center gap-2">
-        <div className="rounded-2xl border-2 border-navy bg-white p-2">
-          <QRCodeCanvas
-            ref={canvas}
-            value={url}
-            size={512}
-            level="M"
-            marginSize={2}
-            fgColor="#2a2670"
-            className="size-32"
-          />
-        </div>
-        <p className="font-mono text-xs text-navy-soft">/v/{c.slug}</p>
+    <Panel className="@container flex flex-col gap-3 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <p className="min-w-0 font-display text-xl leading-tight font-extrabold break-words">{c.name}</p>
+        <span
+          className={cn(
+            "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-extrabold tracking-wide uppercase",
+            STATE[c.state].className,
+          )}
+        >
+          {STATE[c.state].label}
+        </span>
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="font-display text-xl leading-tight font-extrabold">{c.name}</p>
-            <p className="text-sm font-bold">
-              {c.label}
-              {c.minSpend > 0 && <span className="text-navy-soft"> · from {formatRupiah(c.minSpend)}</span>}
-            </p>
-            <p className="text-xs font-semibold text-navy-soft">
-              Lasts {c.validDays} days after claiming
-              {c.claimEndsOn && ` · claim by ${formatDay(c.claimEndsOn)}`}
-              {c.quota != null && ` · ${c.quota} vouchers`}
-            </p>
-          </div>
-          <span
-            className={cn(
-              "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-extrabold uppercase",
-              STATE[c.state].className,
-            )}
-          >
-            {STATE[c.state].label}
+
+      <div className="flex items-center gap-4">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open the claim page"
+          className="shrink-0 rounded-2xl border-2 border-navy bg-white p-1.5 outline-none transition-transform duration-160 ease-out-strong focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97] motion-reduce:active:scale-100"
+        >
+          {/* qrcode.react sets its 512px download size as an inline style; the wrapper sets the on-screen size. */}
+          <span className="block size-24 sm:size-28">
+            <QRCodeCanvas
+              ref={canvas}
+              value={url}
+              size={512}
+              level="M"
+              marginSize={2}
+              fgColor="#2a2670"
+              aria-label={`QR code for ${url}`}
+              style={{ width: "100%", height: "100%" }}
+            />
           </span>
-        </div>
-        <div className="grid grid-cols-4 gap-2 rounded-2xl bg-cream px-3 py-2 text-center">
-          <Stat label="Claimed" value={claimed} />
-          <Stat label="Used" value={c.stats.redeemed} />
-          <Stat label="Waiting" value={c.stats.pending} hint="Started but didn't confirm their email yet" />
-          <Stat label="Discount" value={formatRupiah(c.stats.discountGiven)} />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            intent="outline"
-            onClick={() => navigator.clipboard.writeText(url).then(() => toast.success("Link copied"))}
+        </a>
+        <div className="flex min-w-0 flex-col gap-1">
+          <p className="font-display text-2xl leading-none font-extrabold">{c.label}</p>
+          {c.minSpend > 0 && <p className="text-sm font-bold text-navy-soft">Min. spend {formatRupiah(c.minSpend)}</p>}
+          <p className="text-xs font-semibold text-navy-soft">{terms.join(" · ")}</p>
+          {c.description && <p className="line-clamp-2 text-sm">{c.description}</p>}
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-fit max-w-full truncate font-mono text-xs text-navy-soft underline-offset-2 hover:text-navy hover:underline"
           >
-            Copy link
-          </Button>
-          <Button size="sm" intent="outline" onClick={downloadQr}>
-            Download QR
-          </Button>
-          <Link
-            href={`/dashboard/vouchers/${c.id}/poster`}
-            className={buttonVariants({ intent: "outline", size: "sm" })}
-          >
-            Print poster
-          </Link>
-          <Button size="sm" intent="ghost" onClick={onEdit}>
-            Edit
-          </Button>
+            /v/{c.slug}
+          </a>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 rounded-2xl bg-cream px-3 py-2 @sm:grid-cols-4">
+        <Stat label="Claimed" value={claimed} />
+        <Stat label="Used" value={c.stats.redeemed} />
+        <Stat label="Waiting" value={c.stats.pending} hint="Started but didn't confirm their email yet" />
+        <Stat label="Discount" value={formatRupiah(c.stats.discountGiven)} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 @sm:flex @sm:flex-wrap @sm:items-center">
+        <Button size="sm" intent="outline" onClick={copyLink}>
+          {copied ? "Copied ✓" : "Copy link"}
+        </Button>
+        <Button size="sm" intent="outline" onClick={downloadQr}>
+          Download QR
+        </Button>
+        <Link href={`/dashboard/vouchers/${c.id}/poster`} className={buttonVariants({ intent: "outline", size: "sm" })}>
+          Print poster
+        </Link>
+        <Button size="sm" intent="outline" className="@sm:ml-auto" onClick={onEdit}>
+          Edit
+        </Button>
       </div>
     </Panel>
   );
