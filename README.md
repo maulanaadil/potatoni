@@ -69,6 +69,23 @@ pnpm dev                          # http://localhost:3000
 
 In Conductor, `.conductor/settings.toml` handles the setup, and the **dev** run script starts the app on `$CONDUCTOR_PORT`. `.worktreeinclude` copies `apps/web/.env` from the main checkout into new workspaces.
 
+### CI (`.github/workflows/ci.yml`)
+
+CI runs on every pull request and every push to `main`. It has four parallel jobs, using Node from `.nvmrc` and pnpm from `packageManager`:
+
+| Job | Checks |
+| --- | --- |
+| Dependencies | no `yarn.lock` / `package-lock.json` / `bun.lock`; `pnpm install --frozen-lockfile`; `pnpm audit --prod --audit-level high` |
+| Lint | `pnpm lint` (ESLint, zero warnings) |
+| Typecheck | `pnpm check-types` |
+| Build | `pnpm build` (Prisma client + Next.js), using placeholder `DATABASE_URL`/`APP_URL`, so no secrets are needed |
+
+- Actions are pinned to commit SHAs.
+- The workflow token is read-only, and checkout doesn't keep git credentials.
+- A new push cancels the run it replaces.
+- Turbo runs in strict env mode, so `turbo.json` declares the build's variables: `APP_URL` is part of the cache key, and `DATABASE_URL` is passed through.
+- Security overrides for transitive dependencies live in `pnpm-workspace.yaml`. Remove each one once its parent package ships the fix.
+
 ### Scripts (`apps/web`)
 
 | Script | What it does |

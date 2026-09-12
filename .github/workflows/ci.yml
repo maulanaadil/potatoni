@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege: CI only reads the repo.
+permissions:
+  contents: read
+
+# A new push to the same PR/branch cancels the run it replaces.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  TURBO_TELEMETRY_DISABLED: "1"
+  # Placeholders so Prisma can generate its client and Next can build without real
+  # secrets. Nothing in CI connects to them.
+  DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+  APP_URL: https://potatoni.example
+
+jobs:
+  dependencies:
+    name: Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The repo is pnpm-only ("packageManager" in package.json); a second lockfile
+      # means someone installed with yarn/npm/bun and the two will drift.
+      - name: Reject other package managers' lockfiles
+        run: |
+          stray=$(git ls-files | grep -E '(^|/)(yarn\.lock|package-lock\.json|npm-shrinkwrap\.json|bun\.lockb?)$' || true)
+          if [ -n "$stray" ]; then
+            echo "::error::This repo uses pnpm. Remove: $stray"
+            exit 1
+          fi
+
+      - uses: ./.github/actions/setup
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: ESLint
+        run: pnpm lint
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: TypeScript
+        run: pnpm check-types
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+
+      # Next's incremental build cache; a lockfile or source change starts a new key.
+      - name: Cache Next.js build
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/web/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/src/**', 'apps/web/next.config.js', 'apps/web/prisma/schema.prisma') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      - name: Next.js build
+        run: pnpm build
