@@ -9,14 +9,23 @@ pnpm install
 if [ ! -f apps/web/.env ]; then
   echo "⚠️  apps/web/.env is missing — copy it into $CONDUCTOR_ROOT_PATH/apps/web/.env so new workspaces get it (see apps/web/.env.example)."
 fi
+if [ ! -f apps/ai/.env ]; then
+  echo "⚠️  apps/ai/.env is missing — copy it into $CONDUCTOR_ROOT_PATH/apps/ai/.env so new workspaces get it (see apps/ai/.env.example)."
+fi
 """
 run_mode = "concurrent"
 
+# The assistant service listens on CONDUCTOR_PORT + 2 (studio has + 1).
 [scripts.run.dev]
 available_in = ["local"]
-command = "source /opt/homebrew/opt/nvm/nvm.sh 2>/dev/null && nvm use >/dev/null 2>&1; PORT=$CONDUCTOR_PORT pnpm --filter web dev"
+command = "source /opt/homebrew/opt/nvm/nvm.sh 2>/dev/null && nvm use >/dev/null 2>&1; PORT=$CONDUCTOR_PORT AI_SERVICE_URL=http://localhost:$((CONDUCTOR_PORT + 2)) pnpm --filter web dev"
 default = true
 icon = "play"
+
+[scripts.run.ai]
+available_in = ["local"]
+command = "source /opt/homebrew/opt/nvm/nvm.sh 2>/dev/null && nvm use >/dev/null 2>&1; PORT=$((CONDUCTOR_PORT + 2)) pnpm --filter ai dev"
+icon = "sparkles"
 
 [scripts.run.studio]
 available_in = ["local"]

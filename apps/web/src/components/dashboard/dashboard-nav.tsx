@@ -9,6 +9,7 @@ import { api } from "@/lib/client";
 
 const LINKS = [
   { href: "/dashboard", label: "Overview", icon: "📊" },
+  { href: "/dashboard/assistant", label: "Assistant", icon: "✨" },
   { href: "/dashboard/orders", label: "Orders", icon: "🧾" },
   { href: "/dashboard/products", label: "Products", icon: "🍟" },
   { href: "/dashboard/modifiers", label: "Seasonings & add-ons", icon: "🧂" },

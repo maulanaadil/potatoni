@@ -178,3 +178,15 @@ export const verifyClaimInput = z.object({
 });
 
 export type CampaignInput = z.infer<typeof campaignInput>;
+
+export const assistantInput = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string().trim().min(1).max(8000),
+      }),
+    )
+    .min(1, "Ask something first")
+    .max(40, "This chat is too long — start a new one"),
+});

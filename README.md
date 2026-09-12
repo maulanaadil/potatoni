@@ -6,6 +6,7 @@ _Crispy outside, happy inside._ A monolith POS + owner dashboard for the Potaton
 - **Orders (`/orders`)**: today's orders, with payment for any that are still pending.
 - **Purchases (`/purchases`)**: record stock buys (potatoes, oil, chicken…) so the owner sees real profit.
 - **Dashboard (`/dashboard`)**: owner-only overview (sales vs purchases), orders, products, seasonings & add-ons, purchases, the full activity log, and team accounts.
+- **Assistant (`/dashboard/assistant`)**: an internal AI marketer and personal assistant (Gemini). It reads the business data read-only and answers questions about sales, best sellers, upcoming bazaars and promos. It runs as its own service in [`apps/ai`](apps/ai/README.md).
 
 Built for laptop, iPad (portrait and landscape) and iPhone.
 
@@ -20,6 +21,7 @@ Built for laptop, iPad (portrait and landscape) and iPhone.
 | Auth | JWT (HS256, `jose`) in an httpOnly cookie, also accepted as `Authorization: Bearer` |
 | Storage | S3-compatible bucket (Tigris `t3.storage.dev`), streamed through `/api/media/*` |
 | Charts | Recharts, with a palette checked by the dataviz validator |
+| AI assistant | `apps/ai`: Hono service, Gemini function calling, read-only SQL tools |
 
 ## Payments: one QRIS, no gateway
 
