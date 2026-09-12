@@ -8,6 +8,7 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: env("DATABASE_URL"),
+    // Migrations take a session-level advisory lock, which a pooled connection can leave stuck.
+    url: process.env.DIRECT_DATABASE_URL || env("DATABASE_URL"),
   },
 });

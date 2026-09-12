@@ -60,6 +60,7 @@ model User {
   emailVerifiedAt DateTime?
   activities      Activity[]
   invitesSent     Invite[]   @relation("InvitesSent")
+  assistantChats  AssistantChat[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
@@ -272,4 +273,45 @@ model VoucherClaim {
   @@unique([campaignId, customerId])
   @@unique([campaignId, phone])
   @@index([status])
+}
+
+enum AssistantRole {
+  USER
+  ASSISTANT
+}
+
+// Dashboard → Assistant conversations, one history per team member.
+model AssistantChat {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String // the first question, shortened
+  messages  AssistantMessage[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([userId, updatedAt])
+}
+
+model AssistantMessage {
+  id        String        @id @default(cuid())
+  chatId    String
+  chat      AssistantChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  role      AssistantRole
+  content   String
+  images    String[]      @default([]) // S3 keys of attached photos/screenshots (assistant/…)
+  tools     String[]      @default([]) // what the assistant looked at (sales, locations, web search…)
+  actions   Json? // proposed purchases/location with their status: [{ type, …, status }]
+  replies   String[]      @default([]) // suggested follow-up questions
+  createdAt DateTime      @default(now())
+
+  @@index([chatId, createdAt])
+}
+
+// The assistant's editable instructions (Dashboard → Assistant → Instructions); no row = default.
+model AssistantSettings {
+  id           String   @id @default("default")
+  instructions String
+  updatedBy    String?
+  updatedAt    DateTime @updatedAt
 }

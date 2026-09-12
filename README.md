@@ -6,6 +6,11 @@ _Crispy outside, happy inside._ A monolith POS + owner dashboard for the Potaton
 - **Orders (`/orders`)**: today's orders, with payment for any that are still pending.
 - **Purchases (`/purchases`)**: record stock buys (potatoes, oil, chicken…) so the owner sees real profit.
 - **Dashboard (`/dashboard`)**: owner-only overview (sales vs purchases), orders, products, seasonings & add-ons, purchases, the full activity log, and team accounts.
+- **Assistant (`/dashboard/assistant`, and a launcher on every dashboard page)**: an internal AI marketer and personal assistant (Claude Haiku by default). It reads the business data read-only and answers questions about sales, best sellers, upcoming bazaars and promos.
+  - Photos: send a picture of a receipt or an event poster and it fills in the purchases or the location for you to confirm. Nothing is saved until you press **Record** or **Add**.
+  - History: each owner's chats are saved and can be reopened or deleted.
+  - Instructions: the assistant's role, business context and style are edited under **Assistant → Instructions**. The fixed safety rules are shown there too, read-only.
+  - It runs as its own service in [`apps/ai`](apps/ai/README.md).
 
 Built for laptop, iPad (portrait and landscape) and iPhone.
 
@@ -20,6 +25,7 @@ Built for laptop, iPad (portrait and landscape) and iPhone.
 | Auth | JWT (HS256, `jose`) in an httpOnly cookie, also accepted as `Authorization: Bearer` |
 | Storage | S3-compatible bucket (Tigris `t3.storage.dev`), streamed through `/api/media/*` |
 | Charts | Recharts, with a palette checked by the dataviz validator |
+| AI assistant | `apps/ai`: Hono service, Claude (Anthropic SDK) tool use, read-only SQL tools |
 
 ## Payments: one QRIS, no gateway
 
@@ -154,5 +160,9 @@ All endpoints return JSON. Errors are `{ "error": "<English message>" }`.
 | POST | `/api/vouchers/:slug/claim`, `/api/vouchers/claims/:id/verify`, `/api/vouchers/claims/:id/resend` | public, rate-limited |
 | GET | `/api/vouchers/check?code=&subtotal=` (discount preview) | signed in |
 | GET / POST | `/api/locations` (register), `/api/admin/locations[/:id]` | signed in / admin |
+| POST | `/api/admin/assistant` `{ chatId?, message, imageKeys? }` → `{ chatId, messages }` (asks `apps/ai`, saves both turns) | admin |
+| GET / DELETE | `/api/admin/assistant/chats[/:id]` (your own chats only) | admin |
+| PATCH | `/api/admin/assistant/messages/:id` `{ index, status }` (a proposal was recorded or dismissed) | admin |
+| GET / PUT / DELETE | `/api/admin/assistant/instructions` (DELETE resets to the default) | admin |
 
 Order prices are always recalculated on the server from the database. The client only sends variant and modifier ids. Order items snapshot names and prices, so later menu edits never rewrite sales history.

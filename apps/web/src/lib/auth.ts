@@ -4,13 +4,20 @@ import { redirect } from "next/navigation";
 import { type Role, SESSION_COOKIE, type Session, verifySession } from "./session";
 
 /**
+ * The raw JWT from `Authorization: Bearer` or the session cookie. Also forwarded to
+ * internal services (apps/ai) so they can verify the caller themselves.
+ */
+export async function getSessionToken(): Promise<string | undefined> {
+  const bearer = (await headers()).get("authorization")?.match(/^Bearer (.+)$/i)?.[1];
+  return bearer ?? (await cookies()).get(SESSION_COOKIE)?.value;
+}
+
+/**
  * Reads the JWT from the session cookie, or from `Authorization: Bearer`
  * so the same API works for non-browser clients.
  */
 export async function getSession(): Promise<Session | null> {
-  const bearer = (await headers()).get("authorization")?.match(/^Bearer (.+)$/i)?.[1];
-  const token = bearer ?? (await cookies()).get(SESSION_COOKIE)?.value;
-  return verifySession(token);
+  return verifySession(await getSessionToken());
 }
 
 /** For server components/pages: bounce to login when the role doesn't fit. */

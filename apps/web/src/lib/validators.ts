@@ -193,3 +193,22 @@ export const verifyClaimInput = z.object({
 });
 
 export type CampaignInput = z.infer<typeof campaignInput>;
+
+export const assistantInput = z.object({
+  // Omitted/null = start a new chat.
+  chatId: z.string().min(1).nullable().optional(),
+  message: z.string().trim().min(1, "Ask something first").max(8000),
+  imageKeys: z
+    .array(z.string().regex(/^assistant\/[\w-]+\.(png|jpg|webp)$/, "Attach the image again"))
+    .max(3, "Up to 3 images per question")
+    .default([]),
+});
+
+export const assistantInstructionsInput = z.object({
+  instructions: z.string().trim().min(20, "Write at least a sentence").max(20_000),
+});
+
+export const assistantActionInput = z.object({
+  index: z.number().int().min(0).max(4),
+  status: z.enum(["done", "dismissed"]),
+});

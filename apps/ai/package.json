@@ -1,0 +1,26 @@
+{
+  "name": "ai",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=../web/.env --env-file-if-exists=.env src/dev.ts",
+    "start": "node --env-file-if-exists=../web/.env --env-file-if-exists=.env src/dev.ts",
+    "lint": "biome check .",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.125.0",
+    "@hono/node-server": "2.1.1",
+    "hono": "4.13.7",
+    "jose": "6.2.12",
+    "pg": "8.23.0",
+    "zod": "4.6.2"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "26.4.1",
+    "@types/pg": "8.23.1",
+    "typescript": "7.0.2"
+  }
+}
