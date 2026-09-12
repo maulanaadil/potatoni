@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { EmptyState, Panel, SectionTag } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { api } from "@/lib/client";
 import { formatRupiah, formatTime } from "@/lib/format";
 import type { PurchaseView } from "@/lib/views";
@@ -93,14 +94,8 @@ export function PurchaseBook({ initialPurchases }: { initialPurchases: PurchaseV
               <Input value={form.unit} onChange={set("unit")} required maxLength={16} />
             </Field>
           </div>
-          <Field label="Total paid (Rp)">
-            <Input
-              value={form.total ? Number(form.total.replace(/\D/g, "")).toLocaleString("id-ID") : ""}
-              onChange={set("total")}
-              inputMode="numeric"
-              placeholder="150.000"
-              required
-            />
+          <Field label="Total paid">
+            <MoneyInput value={form.total} onValueChange={(total) => setForm((f) => ({ ...f, total }))} placeholder="150.000" required />
           </Field>
           <Field label="Supplier (optional)">
             <Input value={form.supplier} onChange={set("supplier")} placeholder="Pasar Kosambi" maxLength={80} />

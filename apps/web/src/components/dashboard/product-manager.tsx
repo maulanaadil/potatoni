@@ -9,6 +9,7 @@ import { EmptyState, Panel, PriceRow } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Checkbox, Field, Input, Select } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { api } from "@/lib/client";
 import { mediaUrl } from "@/lib/format";
 import type { MenuProduct } from "@/lib/services/menu";
@@ -206,13 +207,7 @@ export function ProductManager({ products: initial }: { products: MenuProduct[] 
                       value={v.grams}
                       onChange={(e) => setVariant(i, { grams: e.target.value.replace(/\D/g, "") })}
                     />
-                    <Input
-                      aria-label="Price (Rp)"
-                      inputMode="numeric"
-                      placeholder="Price (Rp)"
-                      value={v.price}
-                      onChange={(e) => setVariant(i, { price: e.target.value.replace(/\D/g, "") })}
-                    />
+                    <MoneyInput aria-label="Price" placeholder="Price" value={v.price} onValueChange={(price) => setVariant(i, { price })} />
                     <div className="flex items-center gap-1">
                       <button
                         type="button"

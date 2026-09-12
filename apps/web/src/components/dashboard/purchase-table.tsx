@@ -7,6 +7,7 @@ import { EmptyState, Panel } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { api } from "@/lib/client";
 import { formatDateTime, formatRupiah, jakartaDateKey } from "@/lib/format";
@@ -205,12 +206,8 @@ export function PurchaseTable({
             <Field label="Unit">
               <Input value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} maxLength={16} />
             </Field>
-            <Field label="Total paid (Rp)">
-              <Input
-                inputMode="numeric"
-                value={draft.total}
-                onChange={(e) => setDraft({ ...draft, total: e.target.value.replace(/\D/g, "") })}
-              />
+            <Field label="Total paid">
+              <MoneyInput value={draft.total} onValueChange={(total) => setDraft({ ...draft, total })} placeholder="150.000" />
             </Field>
             <Field label="Date">
               <DatePicker value={draft.date} onChange={(v) => setDraft({ ...draft, date: v })} />

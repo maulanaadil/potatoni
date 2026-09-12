@@ -8,6 +8,7 @@ import { Panel, SectionTag } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Checkbox, Field, Input, Select } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { api } from "@/lib/client";
 import { formatK, mediaUrl } from "@/lib/format";
 import type { MenuModifier } from "@/lib/services/menu";
@@ -166,12 +167,8 @@ export function ModifierManager({ modifiers: initial }: { modifiers: MenuModifie
                   <option value="UPGRADE">Upgrade</option>
                 </Select>
               </Field>
-              <Field label="Price (Rp)" hint={draft.type === "SEASONING" ? "Seasonings are usually free (0)." : undefined}>
-                <Input
-                  inputMode="numeric"
-                  value={draft.price}
-                  onChange={(e) => setDraft({ ...draft, price: e.target.value.replace(/\D/g, "") })}
-                />
+              <Field label="Price" hint={draft.type === "SEASONING" ? "Seasonings are usually free (0)." : undefined}>
+                <MoneyInput value={draft.price} onValueChange={(price) => setDraft({ ...draft, price })} placeholder="0" />
               </Field>
               <Field label="Available for">
                 <Select

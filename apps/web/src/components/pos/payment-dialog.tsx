@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { api } from "@/lib/client";
 import { formatK, formatRupiah } from "@/lib/format";
 import { toDynamicQris } from "@/lib/qris";
@@ -194,12 +195,11 @@ export function PaymentDialog({
             <div className="flex flex-col gap-3">
               <label className="flex flex-col gap-1.5">
                 <span className="text-sm font-bold">Cash received</span>
-                <Input
-                  inputMode="numeric"
+                <MoneyInput
                   autoFocus
-                  placeholder={String(shown.total)}
-                  value={cashValue ? cashValue.toLocaleString("id-ID") : ""}
-                  onChange={(e) => setCash(e.target.value)}
+                  placeholder={shown.total.toLocaleString("id-ID")}
+                  value={cash}
+                  onValueChange={setCash}
                   className="h-14 text-2xl"
                 />
               </label>

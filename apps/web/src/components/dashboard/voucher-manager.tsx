@@ -9,6 +9,7 @@ import { EmptyState, Panel } from "@/components/ui/brand";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/field";
+import { MoneyInput } from "@/components/ui/money-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { api } from "@/lib/client";
 import { cn } from "@/lib/cn";
@@ -204,32 +205,26 @@ export function VoucherManager({ campaigns: initial, baseUrl }: { campaigns: Cam
               </div>
             </div>
             <Field label={draft.discountType === "PERCENT" ? "Percent off" : "Rupiah off"}>
-              <Input
-                inputMode="numeric"
-                value={draft.discountValue}
-                onChange={(e) => setDraft({ ...draft, discountValue: digits(e.target.value) })}
-                placeholder={draft.discountType === "PERCENT" ? "20" : "5000"}
-              />
-            </Field>
-            {draft.discountType === "PERCENT" ? (
-              <Field label="Max discount (Rp, optional)">
+              {draft.discountType === "PERCENT" ? (
                 <Input
                   inputMode="numeric"
-                  value={draft.maxDiscount}
-                  onChange={(e) => setDraft({ ...draft, maxDiscount: digits(e.target.value) })}
-                  placeholder="10000"
+                  value={draft.discountValue}
+                  onChange={(e) => setDraft({ ...draft, discountValue: digits(e.target.value).slice(0, 3) })}
+                  placeholder="20"
                 />
+              ) : (
+                <MoneyInput value={draft.discountValue} onValueChange={(discountValue) => setDraft({ ...draft, discountValue })} placeholder="5.000" />
+              )}
+            </Field>
+            {draft.discountType === "PERCENT" ? (
+              <Field label="Max discount (optional)">
+                <MoneyInput value={draft.maxDiscount} onValueChange={(maxDiscount) => setDraft({ ...draft, maxDiscount })} placeholder="10.000" />
               </Field>
             ) : (
               <span className="hidden sm:block" />
             )}
-            <Field label="Minimum spend (Rp)">
-              <Input
-                inputMode="numeric"
-                value={draft.minSpend}
-                onChange={(e) => setDraft({ ...draft, minSpend: digits(e.target.value) })}
-                placeholder="0"
-              />
+            <Field label="Minimum spend">
+              <MoneyInput value={draft.minSpend} onValueChange={(minSpend) => setDraft({ ...draft, minSpend })} placeholder="0" />
             </Field>
             <Field label="Voucher works for (days)">
               <Input
