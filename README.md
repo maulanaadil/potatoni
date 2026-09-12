@@ -37,6 +37,24 @@ The pooled Prisma Postgres connection can drop mid-query ("Connection terminated
 - **`APP_URL` must be set when building.** Share-image URLs are baked in at build time, so set `APP_URL` (e.g. `https://potatoni.id`) in the build environment, not just at runtime.
 - The auth gate (`src/proxy.ts`) lets the manifest, robots, icons and share images load without a session.
 
+## Team invites
+
+Owners invite people from **Dashboard → Team → Invite person**. The invitee gets an email link, valid for 7 days, where they choose a name and password. Opening the link is what verifies the email address. Only the SHA-256 of each link token is stored, so a new invite or a resend invalidates the older links. There is no direct account creation anymore.
+
+## Vouchers & customers
+
+- **Campaigns** (**Dashboard → Vouchers**): percent off with an optional cap, or rupiah off; a minimum spend; a claim window; a quota; and how long each voucher stays valid. Each campaign has a public link `/v/<slug>`, a downloadable QR code, and a printable A4 poster.
+- **Claiming** (customers, on their phone): name, WhatsApp number (stored as `+62…`), email and an optional promo consent. The customer then enters a 6-digit code sent by email: it expires in 10 minutes, allows 5 attempts, has a 30-second resend cooldown and is capped at 5 sends. After that they get a voucher code (`PTN-XXXXXX`) with a QR, on screen and by email. Each campaign allows one voucher per email and one per phone.
+- **Redeeming** (register): the cashier types the code in the cart. The discount is computed on the server when the order is created. The voucher is marked used when the order is paid, and freed again if the order is cancelled or deleted.
+- **Customers** (**Dashboard → Customers**): search and WhatsApp links, plus CSV export. The default export only includes people who agreed to promos, which is what UU PDP expects for marketing; "Export everyone" includes all.
+
+## Email (SMTP)
+
+Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` and `MAIL_FROM` in `apps/web/.env` (see `.env.example`). Any SMTP provider works, for example a Gmail app password, Brevo or Resend.
+
+- **No `SMTP_HOST` in development:** emails are printed to the terminal, and the invite link or voucher code is shown on screen so the flows can still be tested.
+- **No `SMTP_HOST` in production:** the API answers `503` instead of pretending the email was sent.
+
 ## Getting started
 
 ```bash
@@ -81,5 +99,12 @@ All endpoints return JSON. Errors are `{ "error": "<English message>" }`.
 | GET | `/api/admin/stats`, `/api/admin/activity` | admin |
 | POST | `/api/admin/uploads` (multipart image → S3 key) | admin |
 | GET | `/api/media/:key*` | public (product images, QRIS) |
+| GET / POST | `/api/admin/invites`; DELETE `/api/admin/invites/:id`; POST `/api/admin/invites/:id/resend` | admin |
+| POST | `/api/invites/:token/accept` → creates the account and signs in | public (link from the email) |
+| CRUD | `/api/admin/vouchers[/:id]` (campaigns; delete only when nothing was claimed) | admin |
+| GET | `/api/admin/customers?q=&consent=1`, `/api/admin/customers/export[?all=1]` (CSV) | admin |
+| POST | `/api/vouchers/:slug/claim`, `/api/vouchers/claims/:id/verify`, `/api/vouchers/claims/:id/resend` | public, rate-limited |
+| GET | `/api/vouchers/check?code=&subtotal=` (discount preview) | signed in |
+| GET / POST | `/api/locations` (register), `/api/admin/locations[/:id]` | signed in / admin |
 
 Order prices are always recalculated on the server from the database. The client only sends variant and modifier ids. Order items snapshot names and prices, so later menu edits never rewrite sales history.
