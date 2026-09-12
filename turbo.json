@@ -18,7 +18,7 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "passThroughEnv": ["PORT", "AI_SERVICE_URL", "GEMINI_API_KEY", "GEMINI_MODEL"]
+      "passThroughEnv": ["PORT", "AI_SERVICE_URL", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL"]
     }
   }
 }

@@ -29,7 +29,7 @@ const app = new Hono<AppEnv>();
 
 app.use(logger());
 
-app.get("/health", (c) => c.json({ ok: true, model: env.geminiModel }));
+app.get("/health", (c) => c.json({ ok: true, model: env.anthropicModel }));
 
 app.use("/chat", async (c, next) => {
   c.set("user", await requireAdmin(c.req.header("authorization")));
@@ -62,7 +62,7 @@ app.onError((err, c) => {
 });
 
 const server = serve({ fetch: app.fetch, port: env.port }, (info) => {
-  console.log(`[ai] Potatoni assistant on http://localhost:${info.port} (model: ${env.geminiModel})`);
+  console.log(`[ai] Potatoni assistant on http://localhost:${info.port} (model: ${env.anthropicModel})`);
 });
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {

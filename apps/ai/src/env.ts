@@ -8,6 +8,6 @@ export const env = {
   port: Number(process.env.PORT) || 4000,
   databaseUrl: required("DATABASE_URL"),
   jwtSecret: required("JWT_SECRET"),
-  geminiApiKey: required("GEMINI_API_KEY"),
-  geminiModel: process.env.GEMINI_MODEL || "gemini-flash-latest",
+  anthropicApiKey: required("ANTHROPIC_API_KEY"),
+  anthropicModel: process.env.ANTHROPIC_MODEL || "claude-opus-5",
 };

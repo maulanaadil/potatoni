@@ -1,4 +1,4 @@
-import { GeminiError } from "./gemini.ts";
+import Anthropic from "@anthropic-ai/sdk";
 
 export class HttpError extends Error {
   status: number;
@@ -11,13 +11,24 @@ export class HttpError extends Error {
 /** Maps anything thrown while answering into a status + English message for the dashboard. */
 export function toHttpError(err: unknown): HttpError {
   if (err instanceof HttpError) return err;
-  if (err instanceof GeminiError) {
-    if (err.status === 429) return new HttpError(429, "The AI model is out of quota right now — try again in a minute");
-    if (err.status === 503) return new HttpError(503, "The AI model is very busy right now — try again in a moment");
-    return new HttpError(502, `The AI model had a problem: ${err.message}`);
+  // Most specific first. The SDK has already retried 429 / 5xx / 529 by the time these surface.
+  if (err instanceof Anthropic.RateLimitError) {
+    return new HttpError(429, "The assistant is getting too many requests — try again in a minute");
   }
-  if (err instanceof Error && err.name === "TimeoutError") {
-    return new HttpError(504, "The AI model took too long to answer — please try again");
+  if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
+    return new HttpError(500, "The assistant's Claude API key isn't valid — check ANTHROPIC_API_KEY");
+  }
+  if (err instanceof Anthropic.APIConnectionTimeoutError) {
+    return new HttpError(504, "Claude took too long to answer — please try again");
+  }
+  if (err instanceof Anthropic.APIConnectionError) {
+    return new HttpError(502, "Can't reach Claude right now — check the server's internet connection");
+  }
+  if (err instanceof Anthropic.APIError) {
+    if (err.status === 529 || err.status === 503) {
+      return new HttpError(503, "Claude is overloaded right now — try again in a moment");
+    }
+    return new HttpError(502, `Claude had a problem: ${err.message}`);
   }
   return new HttpError(500, "Something went wrong in the assistant");
 }

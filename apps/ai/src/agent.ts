@@ -1,62 +1,94 @@
-import { generateContent, textOf, type Content, type Part } from "./gemini.ts";
+import Anthropic from "@anthropic-ai/sdk";
+import { env } from "./env.ts";
 import { HttpError } from "./http.ts";
 import { systemPrompt } from "./prompt.ts";
 import { jakartaTodayLabel } from "./time.ts";
-import { functionDeclarations, runTool } from "./tools.ts";
+import { runTool, tools } from "./tools.ts";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
-// Enough for "overview → sales → products → locations → web search" in one answer.
-const MAX_TOOL_ROUNDS = 6;
+// The SDK retries 429 / 5xx / 529 "overloaded" with backoff on its own.
+const client = new Anthropic({ apiKey: env.anthropicApiKey });
+
+// Model turns per answer (tool rounds and web-search resumes). The last one must answer in text.
+const MAX_ROUNDS = 8;
+
+// If Opus 5 / Fable declines a request, the API re-runs it on Anthropic's recommended fallback model.
+const REFUSAL_FALLBACK: Pick<Anthropic.Beta.MessageCreateParamsNonStreaming, "betas" | "fallbacks"> =
+  /^claude-(opus-5|fable-5)/.test(env.anthropicModel)
+    ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" }
+    : {};
+
+const isToolError = (result: unknown) => typeof result === "object" && result !== null && "error" in result;
 
 /**
  * One assistant turn. The dashboard sends the visible conversation each time (the service is
- * stateless); the model calls tools as often as it needs, then answers in text.
+ * stateless); Claude calls tools as often as it needs, then answers in text.
  */
 export async function chat(messages: ChatMessage[], user: { name: string }) {
-  const contents: Content[] = messages.map((m) => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }],
-  }));
-  const base = {
-    systemInstruction: { parts: [{ text: systemPrompt({ userName: user.name, today: jakartaTodayLabel() }) }] },
-    tools: [{ functionDeclarations }],
-  };
+  const history: Anthropic.Beta.BetaMessageParam[] = messages.map((m) => ({ role: m.role, content: m.content }));
+  const system = systemPrompt({ userName: user.name, today: jakartaTodayLabel() });
   const used = new Set<string>();
 
-  for (let round = 0; ; round++) {
-    // Last round: no more tool calls, answer with what's been gathered.
-    const final = round === MAX_TOOL_ROUNDS;
-    const res = await generateContent({
-      ...base,
-      contents,
-      ...(final ? { toolConfig: { functionCallingConfig: { mode: "NONE" } } } : {}),
+  for (let round = 1; ; round++) {
+    const response = await client.beta.messages.create({
+      model: env.anthropicModel,
+      max_tokens: 16000,
+      ...REFUSAL_FALLBACK,
+      // Caches tools + system + the conversation so far, so each tool round re-reads it cheaply.
+      cache_control: { type: "ephemeral" },
+      system,
+      tools,
+      ...(round === MAX_ROUNDS ? { tool_choice: { type: "none" } } : {}),
+      messages: history,
     });
-    const content = res.candidates?.[0]?.content;
-    const calls = content?.parts.flatMap((p) => (p.functionCall ? [p.functionCall] : [])) ?? [];
 
-    if (!content || calls.length === 0 || final) {
-      const reply = textOf(content);
-      if (!reply) {
-        throw new HttpError(
-          502,
-          res.promptFeedback?.blockReason
-            ? "The AI model declined to answer that"
-            : "The AI model returned an empty answer — please try again",
-        );
-      }
-      return { reply, tools: [...used] };
+    for (const block of response.content) {
+      if (block.type === "tool_use" || block.type === "server_tool_use") used.add(block.name);
     }
 
-    // Echo the model's turn unchanged (it carries thought signatures), then the tool results.
-    contents.push({ role: "model", parts: content.parts });
-    const results: Part[] = await Promise.all(
-      calls.map(async (call) => {
-        used.add(call.name);
-        const result = await runTool(call.name, call.args);
-        return { functionResponse: { ...(call.id ? { id: call.id } : {}), name: call.name, response: { result } } };
-      }),
-    );
-    contents.push({ role: "user", parts: results });
+    if (response.stop_reason === "refusal") {
+      throw new HttpError(422, "The assistant can't help with that one — try asking another way");
+    }
+
+    // Web search hit its server-side step limit: send the turn back unchanged and it resumes.
+    if (response.stop_reason === "pause_turn") {
+      history.push({ role: "assistant", content: response.content });
+      continue;
+    }
+
+    const calls = response.content.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use");
+    if (response.stop_reason === "tool_use" && calls.length > 0) {
+      history.push({ role: "assistant", content: response.content });
+      // Every result goes back in one message, so Claude keeps calling tools in parallel.
+      const results = await Promise.all(
+        calls.map(async (call): Promise<Anthropic.Beta.BetaToolResultBlockParam> => {
+          const result = await runTool(call.name, call.input);
+          return { type: "tool_result", tool_use_id: call.id, content: JSON.stringify(result), is_error: isToolError(result) };
+        }),
+      );
+      history.push({ role: "user", content: results });
+      continue;
+    }
+
+    const reply = withSources(response.content);
+    if (!reply) throw new HttpError(502, "The assistant returned an empty answer — please try again");
+    return { reply, tools: [...used] };
   }
+}
+
+/** The answer text, plus the web pages Claude cited from web search as a "Sources" list. */
+function withSources(content: Anthropic.Beta.BetaContentBlock[]) {
+  const sources = new Map<string, string>();
+  let text = "";
+  for (const block of content) {
+    if (block.type !== "text") continue;
+    text += block.text;
+    for (const citation of block.citations ?? []) {
+      if (citation.type === "web_search_result_location") sources.set(citation.url, citation.title ?? citation.url);
+    }
+  }
+  text = text.trim();
+  if (!text || sources.size === 0) return text;
+  return `${text}\n\nSources:\n${[...sources].map(([url, title]) => `- [${title}](${url})`).join("\n")}`;
 }

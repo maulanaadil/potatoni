@@ -1,7 +1,6 @@
+import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { readOnly, type Query } from "./db.ts";
-import type { FunctionDeclaration } from "./gemini.ts";
-import { searchWeb } from "./search.ts";
 import { addDays, daysBetween, jakartaToday, wib } from "./time.ts";
 
 // The assistant's view of the business. Every tool is a fixed, read-only query: the model
@@ -371,25 +370,25 @@ const TOOLS = [
         return { ...totals, signups_by_week: weekly };
       }),
   }),
-
-  defineTool({
-    name: "search_web",
-    description:
-      "Google search for things outside the database: upcoming bazaars, school/campus festivals, car-free days, food festivals and pop-up markets in Bandung (dates, venues, organisers, booth fees), competitor prices, food trends. Results can be out of date; always cite the sources.",
-    args: z.object({
-      query: z.string().trim().min(3).max(300).describe("What to look up, e.g. 'school bazaars in Bandung in October 2026'."),
-    }),
-    run: ({ query }) => searchWeb(query),
-  }),
 ];
 
-export const TOOL_NAMES = TOOLS.map((t) => t.name);
-
-export const functionDeclarations: FunctionDeclaration[] = TOOLS.map((tool) => {
-  const schema = z.toJSONSchema(tool.args, { io: "input" }) as Record<string, unknown>;
-  delete schema.$schema;
-  return { name: tool.name, description: tool.description, parametersJsonSchema: schema };
-});
+/**
+ * Our read-only tools (run by this service) plus Anthropic's hosted web search, for things
+ * outside the database: upcoming bazaars and events in Bandung, competitor prices, trends.
+ */
+export const tools: Anthropic.Beta.BetaToolUnion[] = [
+  ...TOOLS.map((tool): Anthropic.Beta.BetaTool => {
+    const schema = z.toJSONSchema(tool.args, { io: "input" }) as Anthropic.Beta.BetaTool.InputSchema;
+    delete (schema as Record<string, unknown>).$schema;
+    return { name: tool.name, description: tool.description, input_schema: schema };
+  }),
+  {
+    type: "web_search_20260209",
+    name: "web_search",
+    max_uses: 5,
+    user_location: { type: "approximate", city: "Bandung", region: "West Java", country: "ID", timezone: "Asia/Jakarta" },
+  },
+];
 
 /** Runs a tool the model asked for. Errors go back to the model as data so it can recover. */
 export async function runTool(name: string, rawArgs: unknown): Promise<unknown> {

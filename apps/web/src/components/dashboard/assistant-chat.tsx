@@ -26,7 +26,7 @@ const TOOL_LABELS: Record<string, string> = {
   get_costs: "purchases",
   get_voucher_performance: "vouchers",
   get_customer_insights: "customers",
-  search_web: "web search",
+  web_search: "web search",
 };
 
 export function AssistantChat({ name }: { name: string }) {
