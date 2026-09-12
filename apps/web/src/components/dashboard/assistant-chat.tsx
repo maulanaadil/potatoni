@@ -373,7 +373,7 @@ async function shrinkImage(file: File): Promise<File> {
   try {
     const bitmap = await createImageBitmap(file);
     const scale = Math.min(1, 1568 / Math.max(bitmap.width, bitmap.height));
-    if (scale === 1 && file.size < 1.5 * 1024 * 1024 && UPLOADABLE.includes(file.type)) return file;
+    if (scale === 1 && file.size < 700 * 1024 && UPLOADABLE.includes(file.type)) return file;
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bitmap.width * scale);
     canvas.height = Math.round(bitmap.height * scale);

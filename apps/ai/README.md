@@ -65,6 +65,16 @@ pnpm --filter ai dev                    # http://localhost:4000, restarts on cha
 
 The web app finds the service through `AI_SERVICE_URL` in `apps/web/.env` (default `http://localhost:4000`).
 
+## Production (Vercel)
+
+- **Entry points:** `src/app.ts` exports the Hono app, and Vercel serves it as a function (Hono preset, Fluid compute). `src/dev.ts` is only the local runner.
+- **Project:** `potatoni-ai` (https://potatoni-ai.vercel.app) in the same Vercel scope as `potatoni`.
+  - Settings: root directory `apps/ai`, region `sin1`, install `pnpm install --frozen-lockfile --filter ai...`.
+  - Env: `DATABASE_URL`, `JWT_SECRET`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, and `ENABLE_EXPERIMENTAL_COREPACK=1` for pnpm 11.
+- **Deploys:** `.github/workflows/deploy.yml` deploys it together with the web app after CI passes on `main`. It uses the `VERCEL_AI_PROJECT_ID` variable on the `production` environment.
+- **Web app:** the `potatoni` project reaches the service through `AI_SERVICE_URL=https://potatoni-ai.vercel.app`.
+- **Request size:** Vercel caps request bodies at 4.5 MB, so the web app rejects photo batches over about 3.8 MB (base64). The dashboard already shrinks photos above 700 KB.
+
 ## Endpoints
 
 | Method | Path | |

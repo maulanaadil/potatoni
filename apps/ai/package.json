@@ -4,8 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "node --watch --env-file-if-exists=../web/.env --env-file-if-exists=.env src/index.ts",
-    "start": "node --env-file-if-exists=../web/.env --env-file-if-exists=.env src/index.ts",
+    "dev": "node --watch --env-file-if-exists=../web/.env --env-file-if-exists=.env src/dev.ts",
+    "start": "node --env-file-if-exists=../web/.env --env-file-if-exists=.env src/dev.ts",
     "lint": "biome check .",
     "check-types": "tsc --noEmit"
   },

@@ -16,6 +16,8 @@ import type { Session } from "../session";
 const TIMEOUT_MS = 180_000;
 const MAX_HISTORY = 40;
 const SETTINGS_ID = "default";
+// Vercel functions accept request bodies up to 4.5 MB; leave room for the text history.
+const MAX_IMAGE_PAYLOAD = 3_800_000;
 
 const role = (r: AssistantRole) => (r === "USER" ? ("user" as const) : ("assistant" as const));
 
@@ -210,6 +212,11 @@ export async function askAssistant({
     : null;
   if (chatId && !chat) throw new HttpError(404, "That chat no longer exists");
 
+  const images = await Promise.all(imageKeys.map(loadImage));
+  if (images.reduce((size, image) => size + image.data.length, 0) > MAX_IMAGE_PAYLOAD) {
+    throw new HttpError(413, "Those photos are too big together — send one or two at a time");
+  }
+
   let history = [
     ...(chat?.messages ?? []).map((m) => ({
       role: role(m.role),
@@ -221,7 +228,7 @@ export async function askAssistant({
         .filter(Boolean)
         .join("\n\n"),
     })),
-    { role: "user" as const, content: message, images: await Promise.all(imageKeys.map(loadImage)) },
+    { role: "user" as const, content: message, images },
   ].slice(-MAX_HISTORY);
   while (history[0]?.role === "assistant") history = history.slice(1);
 

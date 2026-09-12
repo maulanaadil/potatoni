@@ -1,4 +1,3 @@
-import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { createMiddleware } from "hono/factory";
@@ -7,7 +6,6 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
 import { chat } from "./agent.ts";
 import { requireAdmin } from "./auth.ts";
-import { pool } from "./db.ts";
 import { env } from "./env.ts";
 import { HttpError, toHttpError } from "./http.ts";
 import { PROMPT_VARIABLES, RULES } from "./prompt.ts";
@@ -74,10 +72,4 @@ app.onError((err, c) => {
   return c.json({ error: message }, status as ContentfulStatusCode);
 });
 
-const server = serve({ fetch: app.fetch, port: env.port }, (info) => {
-  console.log(`[ai] Potatoni assistant on http://localhost:${info.port} (model: ${env.anthropicModel})`);
-});
-
-for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  process.once(signal, () => server.close(() => void pool.end()));
-}
+export default app;
