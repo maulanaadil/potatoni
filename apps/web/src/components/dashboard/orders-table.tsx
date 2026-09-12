@@ -7,6 +7,7 @@ import { EmptyState, Panel, StatusBadge } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/date-picker";
 import { api } from "@/lib/client";
 import { formatDateTime, formatRupiah } from "@/lib/format";
 import type { OrderView } from "@/lib/views";
@@ -87,10 +88,10 @@ export function OrdersTable({
           className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.2fr_1.4fr_auto] lg:items-end"
         >
           <Field label="From">
-            <Input type="date" value={form.from} onChange={(e) => setForm({ ...form, from: e.target.value })} />
+            <DatePicker value={form.from} onChange={(v) => setForm({ ...form, from: v })} />
           </Field>
           <Field label="To">
-            <Input type="date" value={form.to} onChange={(e) => setForm({ ...form, to: e.target.value })} />
+            <DatePicker min={form.from} value={form.to} onChange={(v) => setForm({ ...form, to: v })} />
           </Field>
           <Field label="Status">
             <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>

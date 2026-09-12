@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/date-picker";
 import { api } from "@/lib/client";
 import type { LocationSummary } from "@/lib/services/locations";
 import { ConfirmButton, PageHeader } from "./common";
@@ -153,10 +154,10 @@ export function LocationManager({ locations: initial }: { locations: LocationSum
               />
             </Field>
             <Field label="Starts on">
-              <Input type="date" value={draft.startsOn} onChange={(e) => setDraft({ ...draft, startsOn: e.target.value })} />
+              <DatePicker clearable value={draft.startsOn} onChange={(v) => setDraft({ ...draft, startsOn: v })} />
             </Field>
             <Field label="Ends on" hint="Leave empty if you stay until the next move.">
-              <Input type="date" value={draft.endsOn} onChange={(e) => setDraft({ ...draft, endsOn: e.target.value })} />
+              <DatePicker clearable placeholder="Until next move" min={draft.startsOn} value={draft.endsOn} onChange={(v) => setDraft({ ...draft, endsOn: v })} />
             </Field>
             <Field label="Notes (optional)" className="sm:col-span-2">
               <Textarea

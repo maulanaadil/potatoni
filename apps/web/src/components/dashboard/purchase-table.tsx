@@ -7,6 +7,7 @@ import { EmptyState, Panel } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/date-picker";
 import { api } from "@/lib/client";
 import { formatDateTime, formatRupiah, jakartaDateKey } from "@/lib/format";
 import type { PurchaseView } from "@/lib/views";
@@ -120,10 +121,10 @@ export function PurchaseTable({
       <Panel className="mb-4 p-4">
         <form onSubmit={apply} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.4fr_auto] lg:items-end">
           <Field label="From">
-            <Input type="date" value={form.from} onChange={(e) => setForm({ ...form, from: e.target.value })} />
+            <DatePicker value={form.from} onChange={(v) => setForm({ ...form, from: v })} />
           </Field>
           <Field label="To">
-            <Input type="date" value={form.to} onChange={(e) => setForm({ ...form, to: e.target.value })} />
+            <DatePicker min={form.from} value={form.to} onChange={(v) => setForm({ ...form, to: v })} />
           </Field>
           <Field label="Location">
             <Select value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}>
@@ -212,7 +213,7 @@ export function PurchaseTable({
               />
             </Field>
             <Field label="Date">
-              <Input type="date" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} />
+              <DatePicker value={draft.date} onChange={(v) => setDraft({ ...draft, date: v })} />
             </Field>
             <Field label="Location" className="sm:col-span-2">
               <Select value={draft.locationId} onChange={(e) => setDraft({ ...draft, locationId: e.target.value })}>

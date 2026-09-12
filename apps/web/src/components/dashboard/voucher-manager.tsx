@@ -9,6 +9,7 @@ import { EmptyState, Panel } from "@/components/ui/brand";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/date-picker";
 import { api } from "@/lib/client";
 import { cn } from "@/lib/cn";
 import { formatDay, formatRupiah } from "@/lib/format";
@@ -238,10 +239,10 @@ export function VoucherManager({ campaigns: initial, baseUrl }: { campaigns: Cam
               />
             </Field>
             <Field label="Claiming starts">
-              <Input type="date" value={draft.claimStartsAt} onChange={(e) => setDraft({ ...draft, claimStartsAt: e.target.value })} />
+              <DatePicker clearable placeholder="Right away" value={draft.claimStartsAt} onChange={(v) => setDraft({ ...draft, claimStartsAt: v })} />
             </Field>
             <Field label="Claiming ends" hint="Leave empty to keep it open.">
-              <Input type="date" value={draft.claimEndsAt} onChange={(e) => setDraft({ ...draft, claimEndsAt: e.target.value })} />
+              <DatePicker clearable placeholder="No end date" min={draft.claimStartsAt} value={draft.claimEndsAt} onChange={(v) => setDraft({ ...draft, claimEndsAt: v })} />
             </Field>
             <Field label="How many vouchers (optional)" hint="Stops claims when this many are issued.">
               <Input
