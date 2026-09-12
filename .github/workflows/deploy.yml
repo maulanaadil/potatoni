@@ -47,7 +47,12 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           persist-credentials: false
 
+      # Install runs `prisma generate` (postinstall), and prisma.config.ts needs a
+      # DATABASE_URL to load. Generating never connects, so a placeholder is enough here;
+      # the real value arrives with `vercel pull` and is only used by the build.
       - uses: ./.github/actions/setup
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
 
       # The project sets ENABLE_EXPERIMENTAL_COREPACK=1, so `vercel build` shells out to
       # corepack, which Node 25+ (.nvmrc) no longer bundles.
