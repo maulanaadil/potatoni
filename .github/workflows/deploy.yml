@@ -59,6 +59,23 @@ jobs:
       - name: Install Vercel CLI and corepack
         run: npm install --global vercel@59.16.0 corepack@0.36.0
 
+      # Fails with a readable reason when the token can't see the project, instead of the
+      # CLI's generic "Could not retrieve Project Settings". Never prints the token.
+      - name: Check Vercel access
+        run: |
+          api() { curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" "https://api.vercel.com$1"; }
+          echo "Token belongs to: $(api /v2/user | jq -r '.user.username // ("error: " + .error.code)')"
+          echo "Teams this token can access:"
+          api /v2/teams | jq -r '.teams[]? | "  \(.slug) (\(.id))"'
+          project=$(api "/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID")
+          if [ "$(jq -r '.id // empty' <<<"$project")" != "$VERCEL_PROJECT_ID" ]; then
+            echo "::error::VERCEL_TOKEN can't read project $VERCEL_PROJECT_ID in $VERCEL_ORG_ID ($(jq -r '.error.code + ": " + .error.message' <<<"$project")). Create the token with Scope set to the team above that owns the project."
+            exit 1
+          fi
+          echo "Token can read project $(jq -r .name <<<"$project")."
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
       # Project settings plus production env vars (DATABASE_URL, S3, SMTP…) from Vercel,
       # so the build sees the same config as a Vercel-side build.
       - name: Pull production settings
