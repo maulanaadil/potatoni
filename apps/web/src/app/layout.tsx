@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Baloo_2, Nunito } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
+import { OfflineBanner, ServiceWorker } from "@/components/pwa";
 import "./globals.css";
 
 const baloo = Baloo_2({
@@ -51,6 +52,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" className={`${baloo.variable} ${nunito.variable}`}>
       <body className="min-h-dvh bg-cream font-sans text-navy antialiased selection:bg-sun">
         <Providers>{children}</Providers>
+        <OfflineBanner />
+        <ServiceWorker />
         <Toaster
           position="top-center"
           toastOptions={{
