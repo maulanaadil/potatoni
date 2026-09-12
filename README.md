@@ -29,6 +29,14 @@ The stall's printed QRIS (`apps/web/assets/source/qris.jpg`) is decoded once int
 
 The pooled Prisma Postgres connection can drop mid-query ("Connection terminated unexpectedly"). `src/lib/db.ts` keeps sockets alive and **retries read queries once** on a fresh connection. Writes are never retried, so an order can't be recorded twice. Instead the API answers `503 Lost connection to the database — please try again`.
 
+## Head, icons & SEO
+
+- **Icons:** `assets/source/icon.svg` (the smiling fries-box badge) is the single source. `pnpm --filter web assets:brand` builds `favicon.ico` (16/32/48), `icon.svg`, `apple-icon.png`, the manifest icons in `public/icons/` (192, 512, maskable 512), and the 1200×630 share image `opengraph-image.jpg` / `twitter-image.jpg`.
+- **Install as an app:** `src/app/manifest.ts` lets iPad and iPhone add the register to the home screen and run it full-screen.
+- **Not indexed:** this is a private POS behind a login, so `robots.ts` disallows everything and pages send `noindex`. Link previews (WhatsApp, Telegram) still work. Flip `robots` in `src/app/layout.tsx` and `robots.ts` if a public page is added.
+- **`APP_URL` must be set when building.** Share-image URLs are baked in at build time, so set `APP_URL` (e.g. `https://potatoni.id`) in the build environment, not just at runtime.
+- The auth gate (`src/proxy.ts`) lets the manifest, robots, icons and share images load without a session.
+
 ## Getting started
 
 ```bash

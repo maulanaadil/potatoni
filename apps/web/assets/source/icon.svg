@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Potatoni badge: the smiling fries box from the menu board, redrawn so it stays crisp at 16px. -->
+  <rect width="512" height="512" rx="116" fill="#2a2670"/>
+  <g stroke="#2a2670" stroke-width="12" stroke-linejoin="round">
+    <rect x="142" y="118" width="46" height="176" rx="18" fill="#ffc62b" transform="rotate(-12 165 206)"/>
+    <rect x="196" y="92" width="46" height="196" rx="18" fill="#ffc62b" transform="rotate(-5 219 190)"/>
+    <rect x="250" y="80" width="46" height="208" rx="18" fill="#ffd45e"/>
+    <rect x="302" y="96" width="46" height="192" rx="18" fill="#ffc62b" transform="rotate(6 325 192)"/>
+    <rect x="350" y="124" width="44" height="170" rx="18" fill="#ffc62b" transform="rotate(13 372 209)"/>
+  </g>
+  <path d="M122 238 H390 L360 420 Q356 440 336 440 H176 Q156 440 152 420 Z" fill="#2a2670" stroke="#ffc62b" stroke-width="22" stroke-linejoin="round"/>
+  <circle cx="218" cy="310" r="17" fill="#ffc62b"/>
+  <circle cx="294" cy="310" r="17" fill="#ffc62b"/>
+  <path d="M204 354 Q256 402 308 354" fill="none" stroke="#ffc62b" stroke-width="20" stroke-linecap="round"/>
+</svg>

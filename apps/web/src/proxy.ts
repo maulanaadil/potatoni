@@ -24,5 +24,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico)$).*)"],
+  // Metadata files (manifest, robots, icons, share images) must load without a session.
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|robots.txt|icons/|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt)$).*)",
+  ],
 };

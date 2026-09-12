@@ -115,8 +115,8 @@ export function Logo({ className, priority }: { className?: string; priority?: b
     <Image
       src="/api/media/brand/logo.webp"
       alt="Potatoni — crispy outside, happy inside"
-      width={460}
-      height={281}
+      width={450}
+      height={293}
       priority={priority}
       className={className}
     />
