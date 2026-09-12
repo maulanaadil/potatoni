@@ -1,11 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/brand";
 import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/client";
+import { cn } from "@/lib/cn";
 
 const NAV = [
   { href: "/", label: "Register", icon: "🍟" },
@@ -62,11 +62,7 @@ export function PosHeader({ name, role }: { name: string; role: "ADMIN" | "CASHI
               Dashboard
             </Link>
           )}
-          <button
-            type="button"
-            onClick={signOut}
-            className={buttonVariants({ intent: "ghost", size: "sm" })}
-          >
+          <button type="button" onClick={signOut} className={buttonVariants({ intent: "ghost", size: "sm" })}>
             Sign out
           </button>
         </div>

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { Logo, Sparkles } from "@/components/ui/brand";
 import { PosterActions, PosterQr } from "@/components/dashboard/voucher-poster";
+import { Logo, Sparkles } from "@/components/ui/brand";
 import { db } from "@/lib/db";
 import { formatDay, formatRupiah } from "@/lib/format";
 import { dateKey } from "@/lib/services/locations";
@@ -15,7 +15,10 @@ export default async function PosterPage({ params }: { params: Promise<{ id: str
   const campaign = await db.voucherCampaign.findUnique({ where: { id: (await params).id } });
   if (!campaign) notFound();
   const h = await headers();
-  const baseUrl = (process.env.APP_URL ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`).replace(/\/$/, "");
+  const baseUrl = (process.env.APP_URL ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`).replace(
+    /\/$/,
+    "",
+  );
   const url = `${baseUrl}/v/${campaign.slug}`;
   const endsOn = dateKey(campaign.claimEndsAt);
 
@@ -33,9 +36,7 @@ export default async function PosterPage({ params }: { params: Promise<{ id: str
         </div>
         <PosterQr value={url} />
         <div className="text-sm font-bold">
-          <p>
-            1. Scan · 2. Fill in your name, WhatsApp &amp; email · 3. Confirm the code we email you
-          </p>
+          <p>1. Scan · 2. Fill in your name, WhatsApp &amp; email · 3. Confirm the code we email you</p>
           <p className="mt-1 text-navy-soft">
             {campaign.minSpend > 0 && `Orders from ${formatRupiah(campaign.minSpend)} · `}
             One per person{endsOn && ` · claim by ${formatDay(endsOn)}`}

@@ -30,7 +30,12 @@ export function VoucherTicket({ voucher, pop = false }: { voucher: VoucherView; 
             {voucher.minSpend > 0 && ` · orders from ${formatRupiah(voucher.minSpend)}`}
           </p>
         </div>
-        <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs font-extrabold uppercase", STATUS[voucher.status].className)}>
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-extrabold uppercase",
+            STATUS[voucher.status].className,
+          )}
+        >
           {STATUS[voucher.status].label}
         </span>
       </div>
@@ -44,7 +49,14 @@ export function VoucherTicket({ voucher, pop = false }: { voucher: VoucherView; 
 
       <div className={cn("flex flex-col items-center gap-3 px-5 pb-6", faded && "opacity-50")}>
         <div className="rounded-2xl bg-white p-3">
-          <QRCodeSVG value={voucher.code} size={176} level="M" marginSize={1} fgColor="#2a2670" title={`Voucher ${voucher.code}`} />
+          <QRCodeSVG
+            value={voucher.code}
+            size={176}
+            level="M"
+            marginSize={1}
+            fgColor="#2a2670"
+            title={`Voucher ${voucher.code}`}
+          />
         </div>
         <p className="font-display text-3xl font-extrabold tracking-[0.2em] text-sun">{voucher.code}</p>
         <p className="text-center text-sm font-semibold text-cream/80">

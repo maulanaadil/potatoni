@@ -1,5 +1,5 @@
-import { cn } from "@/lib/cn";
 import type { ComponentProps, ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
 // text-base keeps iOS Safari from zooming into focused inputs.
 // Shared by MoneyInput so every text-like field looks the same.
@@ -30,6 +30,7 @@ export function Field({
   className?: string;
 }) {
   return (
+    // biome-ignore lint/a11y/noLabelWithoutControl: the control is passed in as children
     <label className={cn("flex flex-col gap-1.5", className)}>
       <span className="text-sm font-bold">{label}</span>
       {children}

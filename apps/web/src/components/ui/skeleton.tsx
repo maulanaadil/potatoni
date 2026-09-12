@@ -20,6 +20,7 @@ export function PanelSkeleton({ className, rows = 4 }: { className?: string; row
   return (
     <Panel className={cn("flex flex-col gap-3 p-4", className)}>
       {Array.from({ length: rows }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders, never reordered
         <Skeleton key={i} className={cn("h-10", i % 3 === 2 && "w-2/3")} />
       ))}
     </Panel>

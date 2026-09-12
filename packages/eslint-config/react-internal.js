@@ -1,6 +1,6 @@
-import pluginReactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import { config as baseConfig } from "./base.js";
+import { reactHooksConfig } from "./react-hooks.js";
 
 /**
  * A custom ESLint configuration for libraries that use React.
@@ -16,5 +16,5 @@ export const config = [
       },
     },
   },
-  pluginReactHooks.configs.flat.recommended,
+  ...reactHooksConfig,
 ];

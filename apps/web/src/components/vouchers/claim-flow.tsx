@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { Panel } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
@@ -52,9 +52,12 @@ export function ClaimFlow({ campaign }: { campaign: PublicCampaign }) {
   const submitForm = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      const res = await api<{ claimId: string; email: string; devCode?: string }>(`/api/vouchers/${campaign.slug}/claim`, {
-        body: form,
-      });
+      const res = await api<{ claimId: string; email: string; devCode?: string }>(
+        `/api/vouchers/${campaign.slug}/claim`,
+        {
+          body: form,
+        },
+      );
       setCode("");
       setCooldown(30);
       setStep({ name: "verify", ...res });
@@ -116,7 +119,9 @@ export function ClaimFlow({ campaign }: { campaign: PublicCampaign }) {
       ) : step.name === "form" ? (
         <Panel key="form" className="animate-rise p-5 motion-reduce:animate-none">
           <h1 className="font-display text-2xl font-extrabold">Get your voucher</h1>
-          <p className="mb-4 text-sm font-semibold text-navy-soft">We&apos;ll email you a code to confirm it&apos;s really you.</p>
+          <p className="mb-4 text-sm font-semibold text-navy-soft">
+            We&apos;ll email you a code to confirm it&apos;s really you.
+          </p>
           <form onSubmit={submitForm} className="flex flex-col gap-3">
             <Field label="Your name">
               <Input
@@ -157,7 +162,8 @@ export function ClaimFlow({ campaign }: { campaign: PublicCampaign }) {
                 className="mt-0.5 size-5 shrink-0 accent-navy"
               />
               <span>
-                <span className="font-bold">Send me Potatoni promos</span> by WhatsApp and email. You can stop them any time.
+                <span className="font-bold">Send me Potatoni promos</span> by WhatsApp and email. You can stop them any
+                time.
               </span>
             </label>
             {error && <p className="rounded-xl bg-tomato/10 px-3 py-2 text-sm font-bold text-tomato">{error}</p>}

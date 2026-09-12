@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import type { BarcodeDetector as PonyfillDetector } from "barcode-detector/ponyfill";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 
@@ -23,16 +23,24 @@ async function createDetector(): Promise<Detector> {
   }
   const { BarcodeDetector, prepareZXingModule } = await import("barcode-detector/ponyfill");
   prepareZXingModule({
-    overrides: { locateFile: (path: string, prefix: string) => (path.endsWith(".wasm") ? `/wasm/${path}` : prefix + path) },
+    overrides: {
+      locateFile: (path: string, prefix: string) => (path.endsWith(".wasm") ? `/wasm/${path}` : prefix + path),
+    },
   });
   return new BarcodeDetector({ formats: ["qr_code"] });
+}
+
+/** Turns the camera (and its indicator light) off. */
+function stopTracks(stream: MediaStream) {
+  for (const track of stream.getTracks()) track.stop();
 }
 
 type CameraState = "starting" | "scanning" | "denied" | "no-camera" | "unsupported" | "error";
 
 const MESSAGES: Record<Exclude<CameraState, "scanning">, string> = {
   starting: "Opening the camera…",
-  denied: "Camera access is blocked. Allow the camera for this site in your browser settings, or type the code instead.",
+  denied:
+    "Camera access is blocked. Allow the camera for this site in your browser settings, or type the code instead.",
   "no-camera": "No camera was found on this device. Type the code instead.",
   unsupported: "This browser can't open the camera. Type the code instead.",
   error: "The camera couldn't start. Close other apps using it and try again, or type the code instead.",
@@ -56,12 +64,15 @@ function CameraView({ onCode }: { onCode: (code: string) => void }) {
     async function start() {
       if (!navigator.mediaDevices?.getUserMedia) return setState("unsupported");
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        });
       } catch (err) {
         const name = (err as DOMException).name;
         return setState(name === "NotAllowedError" ? "denied" : name === "NotFoundError" ? "no-camera" : "error");
       }
-      if (stopped || !video.current) return stream.getTracks().forEach((t) => t.stop());
+      if (stopped || !video.current) return stopTracks(stream);
       video.current.srcObject = stream;
       await video.current.play().catch(() => {});
 
@@ -98,7 +109,7 @@ function CameraView({ onCode }: { onCode: (code: string) => void }) {
     return () => {
       stopped = true;
       clearTimeout(timer);
-      stream?.getTracks().forEach((t) => t.stop());
+      if (stream) stopTracks(stream);
     };
   }, []);
 
@@ -120,7 +131,8 @@ function CameraView({ onCode }: { onCode: (code: string) => void }) {
         )}
       </div>
       <p className="text-center text-sm font-semibold text-navy-soft">
-        Point the camera at the QR on the customer&apos;s voucher (screen or email). A USB or Bluetooth scanner can also type straight into the code box.
+        Point the camera at the QR on the customer&apos;s voucher (screen or email). A USB or Bluetooth scanner can also
+        type straight into the code box.
       </p>
     </div>
   );

@@ -9,6 +9,7 @@ export default function PosLoading() {
         <HeadingSkeleton />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {Array.from({ length: 6 }, (_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders, never reordered
             <Skeleton key={i} className="h-40 rounded-3xl" />
           ))}
         </div>

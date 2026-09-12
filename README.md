@@ -76,7 +76,7 @@ CI runs on every pull request and every push to `main`. It has four parallel job
 | Job | Checks |
 | --- | --- |
 | Dependencies | no `yarn.lock` / `package-lock.json` / `bun.lock`; `pnpm install --frozen-lockfile`; `pnpm audit --prod --audit-level high` |
-| Lint | `pnpm lint` (ESLint, zero warnings) |
+| Lint | `pnpm lint` (Biome formatting/imports/lint in every workspace, then ESLint in `apps/web`, zero warnings) |
 | Typecheck | `pnpm check-types` |
 | Build | `pnpm build` (Prisma client + Next.js), using placeholder `DATABASE_URL`/`APP_URL`, so no secrets are needed |
 
@@ -85,6 +85,17 @@ CI runs on every pull request and every push to `main`. It has four parallel job
 - A new push cancels the run it replaces.
 - Turbo runs in strict env mode, so `turbo.json` declares the build's variables: `APP_URL` is part of the cache key, and `DATABASE_URL` is passed through.
 - Security overrides for transitive dependencies live in `pnpm-workspace.yaml`. Remove each one once its parent package ships the fix.
+
+### Linting and formatting
+
+[Biome](https://biomejs.dev) formats, sorts imports and lints every workspace from one root `biome.json`. `apps/web/biome.json` extends it (`"extends": "//"`) and adds the Next.js, React and Tailwind settings. ESLint is kept only for the rules Biome doesn't have yet: the React Compiler checks from `eslint-plugin-react-hooks` and Next.js's own checks.
+
+| Command | What it does |
+| --- | --- |
+| `pnpm lint` | `biome check` in each workspace plus the root config files, then ESLint in `apps/web`. Fails on any finding. |
+| `pnpm format` | `biome check --write .` formats, organizes imports and applies safe fixes across the repo. |
+
+In VS Code, install the recommended Biome extension. `.vscode/settings.json` formats on save.
 
 ### Scripts (`apps/web`)
 

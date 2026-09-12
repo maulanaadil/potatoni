@@ -88,7 +88,9 @@ export function UserManager({
 
   async function resend(i: InviteView) {
     try {
-      const res = await api<{ delivered: boolean; devLink?: string }>(`/api/admin/invites/${i.id}/resend`, { method: "POST" });
+      const res = await api<{ delivered: boolean; devLink?: string }>(`/api/admin/invites/${i.id}/resend`, {
+        method: "POST",
+      });
       toast.success(`Invite sent again to ${i.email}`);
       setDevLink(res.devLink ?? null);
       await mutateInvites();
@@ -135,7 +137,11 @@ export function UserManager({
           <p className="font-bold">Dev mode: no SMTP set up, so the email wasn&apos;t sent. The invite link:</p>
           <code className="rounded-lg bg-paper px-2 py-1 break-all">{devLink}</code>
           <div className="flex gap-2">
-            <Button size="sm" intent="outline" onClick={() => navigator.clipboard.writeText(devLink).then(() => toast.success("Link copied"))}>
+            <Button
+              size="sm"
+              intent="outline"
+              onClick={() => navigator.clipboard.writeText(devLink).then(() => toast.success("Link copied"))}
+            >
               Copy link
             </Button>
             <Button size="sm" intent="ghost" onClick={() => setDevLink(null)}>
@@ -222,10 +228,17 @@ export function UserManager({
               />
             </Field>
             <Field label="Name (optional)">
-              <Input value={invite.name} onChange={(e) => setInvite({ ...invite, name: e.target.value })} maxLength={60} />
+              <Input
+                value={invite.name}
+                onChange={(e) => setInvite({ ...invite, name: e.target.value })}
+                maxLength={60}
+              />
             </Field>
             <Field label="Role">
-              <Select value={invite.role} onChange={(e) => setInvite({ ...invite, role: e.target.value as InviteDraft["role"] })}>
+              <Select
+                value={invite.role}
+                onChange={(e) => setInvite({ ...invite, role: e.target.value as InviteDraft["role"] })}
+              >
                 <option value="CASHIER">Cashier (register only)</option>
                 <option value="ADMIN">Owner (register + dashboard)</option>
               </Select>
@@ -240,7 +253,11 @@ export function UserManager({
         title="Edit account"
         footer={
           <div className="flex justify-between gap-2">
-            {edit && edit.id !== currentUserId ? <ConfirmButton onConfirm={() => remove(edit.id)}>Delete</ConfirmButton> : <span />}
+            {edit && edit.id !== currentUserId ? (
+              <ConfirmButton onConfirm={() => remove(edit.id)}>Delete</ConfirmButton>
+            ) : (
+              <span />
+            )}
             <Button intent="sun" onClick={saveEdit} disabled={saving}>
               {saving ? "Saving…" : "Save"}
             </Button>
@@ -253,7 +270,10 @@ export function UserManager({
               <Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} maxLength={60} />
             </Field>
             <Field label="Role">
-              <Select value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value as EditDraft["role"] })}>
+              <Select
+                value={edit.role}
+                onChange={(e) => setEdit({ ...edit, role: e.target.value as EditDraft["role"] })}
+              >
                 <option value="CASHIER">Cashier</option>
                 <option value="ADMIN">Owner (admin)</option>
               </Select>

@@ -49,7 +49,11 @@ export function CustomerTable({ customers: initial }: { customers: CustomerRow[]
           aria-label="Search customers"
           className="max-w-sm flex-1"
         />
-        <Checkbox label="Agreed to promos only" checked={consentOnly} onChange={(e) => setConsentOnly(e.target.checked)} />
+        <Checkbox
+          label="Agreed to promos only"
+          checked={consentOnly}
+          onChange={(e) => setConsentOnly(e.target.checked)}
+        />
       </Panel>
 
       {customers.length === 0 ? (
@@ -67,7 +71,12 @@ export function CustomerTable({ customers: initial }: { customers: CustomerRow[]
                 </div>
                 <p className="truncate text-sm text-navy-soft">{c.email}</p>
                 <div className="flex items-center justify-between gap-2 text-sm">
-                  <a href={waLink(c.phone)} target="_blank" rel="noreferrer" className="font-bold text-leaf underline-offset-4 hover:underline">
+                  <a
+                    href={waLink(c.phone)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold text-leaf underline-offset-4 hover:underline"
+                  >
                     {c.phone}
                   </a>
                   <span className="font-semibold text-navy-soft">
@@ -94,11 +103,18 @@ export function CustomerTable({ customers: initial }: { customers: CustomerRow[]
                   <td className="px-4 py-3 font-bold">
                     {c.name}
                     {c.campaigns.length > 0 && (
-                      <span className="block max-w-56 truncate text-xs font-semibold text-navy-soft">{c.campaigns.join(" · ")}</span>
+                      <span className="block max-w-56 truncate text-xs font-semibold text-navy-soft">
+                        {c.campaigns.join(" · ")}
+                      </span>
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <a href={waLink(c.phone)} target="_blank" rel="noreferrer" className="font-bold text-leaf underline-offset-4 hover:underline">
+                    <a
+                      href={waLink(c.phone)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-bold text-leaf underline-offset-4 hover:underline"
+                    >
                       {c.phone}
                     </a>
                   </td>
@@ -123,10 +139,17 @@ export function CustomerTable({ customers: initial }: { customers: CustomerRow[]
 function Badges({ c }: { c: CustomerRow }) {
   return (
     <span className="flex shrink-0 gap-1">
-      <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-extrabold uppercase", c.verified ? "bg-leaf/15 text-leaf" : "bg-navy/10 text-navy-soft")}>
+      <span
+        className={cn(
+          "rounded-full px-2 py-0.5 text-[11px] font-extrabold uppercase",
+          c.verified ? "bg-leaf/15 text-leaf" : "bg-navy/10 text-navy-soft",
+        )}
+      >
         {c.verified ? "Verified" : "Unverified"}
       </span>
-      {c.marketingConsent && <span className="rounded-full bg-sun px-2 py-0.5 text-[11px] font-extrabold uppercase">Promos OK</span>}
+      {c.marketingConsent && (
+        <span className="rounded-full bg-sun px-2 py-0.5 text-[11px] font-extrabold uppercase">Promos OK</span>
+      )}
     </span>
   );
 }

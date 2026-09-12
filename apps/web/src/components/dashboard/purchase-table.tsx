@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { EmptyState, Panel } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
 import { MoneyInput } from "@/components/ui/money-input";
-import { DatePicker } from "@/components/ui/date-picker";
 import { api } from "@/lib/client";
 import { formatDateTime, formatRupiah, jakartaDateKey } from "@/lib/format";
 import type { PurchaseView } from "@/lib/views";
@@ -167,7 +167,10 @@ export function PurchaseTable({
             >
               <div className="min-w-0">
                 <p className="font-bold">
-                  {p.item} <span className="text-navy-soft">· {p.quantity} {p.unit}</span>
+                  {p.item}{" "}
+                  <span className="text-navy-soft">
+                    · {p.quantity} {p.unit}
+                  </span>
                 </p>
                 <p className="truncate text-xs font-semibold text-navy-soft">
                   {formatDateTime(p.purchasedAt)}
@@ -201,13 +204,21 @@ export function PurchaseTable({
               <Input value={draft.item} onChange={(e) => setDraft({ ...draft, item: e.target.value })} maxLength={80} />
             </Field>
             <Field label="Quantity">
-              <Input inputMode="decimal" value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: e.target.value })} />
+              <Input
+                inputMode="decimal"
+                value={draft.quantity}
+                onChange={(e) => setDraft({ ...draft, quantity: e.target.value })}
+              />
             </Field>
             <Field label="Unit">
               <Input value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} maxLength={16} />
             </Field>
             <Field label="Total paid">
-              <MoneyInput value={draft.total} onValueChange={(total) => setDraft({ ...draft, total })} placeholder="150.000" />
+              <MoneyInput
+                value={draft.total}
+                onValueChange={(total) => setDraft({ ...draft, total })}
+                placeholder="150.000"
+              />
             </Field>
             <Field label="Date">
               <DatePicker value={draft.date} onChange={(v) => setDraft({ ...draft, date: v })} />
@@ -225,10 +236,18 @@ export function PurchaseTable({
               </Select>
             </Field>
             <Field label="Supplier">
-              <Input value={draft.supplier} onChange={(e) => setDraft({ ...draft, supplier: e.target.value })} maxLength={80} />
+              <Input
+                value={draft.supplier}
+                onChange={(e) => setDraft({ ...draft, supplier: e.target.value })}
+                maxLength={80}
+              />
             </Field>
             <Field label="Note">
-              <Input value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} maxLength={200} />
+              <Input
+                value={draft.note}
+                onChange={(e) => setDraft({ ...draft, note: e.target.value })}
+                maxLength={200}
+              />
             </Field>
           </div>
         )}

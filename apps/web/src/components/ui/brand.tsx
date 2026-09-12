@@ -1,6 +1,6 @@
-import { cn } from "@/lib/cn";
 import Image from "next/image";
 import type { ComponentProps, ReactNode } from "react";
+import { cn } from "@/lib/cn";
 import { formatK } from "@/lib/format";
 
 /**
@@ -9,12 +9,7 @@ import { formatK } from "@/lib/format";
  * (e.g. a location's dates) widens the column and the whole page scrolls sideways on phones.
  */
 export function Panel({ className, ...props }: ComponentProps<"section">) {
-  return (
-    <section
-      className={cn("min-w-0 rounded-3xl border-2 border-navy bg-paper", className)}
-      {...props}
-    />
-  );
+  return <section className={cn("min-w-0 rounded-3xl border-2 border-navy bg-paper", className)} {...props} />;
 }
 
 /** Brush-stroke section heading ("FRIES", "ADD-ONS"). */
@@ -78,7 +73,7 @@ export function PriceRow({
       <span className="w-6 text-xl font-extrabold">{size}</span>
       <span className="text-sm font-semibold text-navy/70">— {grams}g</span>
       {popular && (
-        <span aria-label="Best seller" className="text-sun">
+        <span role="img" aria-label="Best seller" className="text-sun">
           ★
         </span>
       )}

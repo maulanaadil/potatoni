@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,13 @@ export function VoucherField({ preview }: { preview: ReturnType<typeof useVouche
 
   if (preview.code) {
     return (
-      <div className={preview.error ? "rounded-2xl border-2 border-tomato bg-tomato/5 px-3 py-2" : "rounded-2xl border-2 border-dashed border-navy bg-sun/40 px-3 py-2"}>
+      <div
+        className={
+          preview.error
+            ? "rounded-2xl border-2 border-tomato bg-tomato/5 px-3 py-2"
+            : "rounded-2xl border-2 border-dashed border-navy bg-sun/40 px-3 py-2"
+        }
+      >
         <div className="flex items-center justify-between gap-2">
           <p className="min-w-0 text-sm">
             <span className="font-display font-extrabold tracking-wide">🎟️ {preview.code}</span>
@@ -86,7 +92,14 @@ export function VoucherField({ preview }: { preview: ReturnType<typeof useVouche
         onClick={() => setScanning(true)}
       >
         <svg viewBox="0 0 24 24" aria-hidden className="size-5">
-          <path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M7 12h10" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M7 12h10"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </Button>
       <Button type="submit" intent="outline" disabled={!draft.trim()}>

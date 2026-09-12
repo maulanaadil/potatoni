@@ -27,7 +27,13 @@ type Draft = {
 };
 
 const GROUPS: { type: ModifierType; title: string; icon: string; hint: string; folder: string }[] = [
-  { type: "SEASONING", title: "Free seasonings", icon: "🧂", hint: "Customers pick up to 2, free.", folder: "seasoning" },
+  {
+    type: "SEASONING",
+    title: "Free seasonings",
+    icon: "🧂",
+    hint: "Customers pick up to 2, free.",
+    folder: "seasoning",
+  },
   { type: "ADDON", title: "Add-ons", icon: "➕", hint: "Paid extras on top of any size.", folder: "addon" },
   { type: "UPGRADE", title: "Upgrades", icon: "⭐", hint: "Swap the cut, e.g. Pom-Pom +3K.", folder: "menu" },
 ];
@@ -53,7 +59,15 @@ export function ModifierManager({ modifiers: initial }: { modifiers: MenuModifie
             isActive: m.isActive,
             sortOrder: String(m.sortOrder),
           }
-        : { name: "", type, price: type === "SEASONING" ? "0" : "", imageKey: null, appliesTo: "", isActive: true, sortOrder: "0" },
+        : {
+            name: "",
+            type,
+            price: type === "SEASONING" ? "0" : "",
+            imageKey: null,
+            appliesTo: "",
+            isActive: true,
+            sortOrder: "0",
+          },
     );
   }
 
@@ -123,7 +137,13 @@ export function ModifierManager({ modifiers: initial }: { modifiers: MenuModifie
                   >
                     <span className="relative h-16 w-full">
                       {m.imageKey && (
-                        <Image src={mediaUrl(m.imageKey)!} alt="" fill sizes="160px" className="object-contain mix-blend-multiply" />
+                        <Image
+                          src={mediaUrl(m.imageKey)!}
+                          alt=""
+                          fill
+                          sizes="160px"
+                          className="object-contain mix-blend-multiply"
+                        />
                       )}
                     </span>
                     <span className="font-display leading-tight font-extrabold">{m.name}</span>
@@ -155,20 +175,35 @@ export function ModifierManager({ modifiers: initial }: { modifiers: MenuModifie
       >
         {draft && (
           <div className="flex flex-col gap-4">
-            <ImageUpload value={draft.imageKey} onChange={(imageKey) => setDraft({ ...draft, imageKey })} folder={group?.folder ?? "uploads"} />
+            <ImageUpload
+              value={draft.imageKey}
+              onChange={(imageKey) => setDraft({ ...draft, imageKey })}
+              folder={group?.folder ?? "uploads"}
+            />
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Name">
-                <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} maxLength={60} />
+                <Input
+                  value={draft.name}
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  maxLength={60}
+                />
               </Field>
               <Field label="Type">
-                <Select value={draft.type} onChange={(e) => setDraft({ ...draft, type: e.target.value as ModifierType })}>
+                <Select
+                  value={draft.type}
+                  onChange={(e) => setDraft({ ...draft, type: e.target.value as ModifierType })}
+                >
                   <option value="SEASONING">Free seasoning</option>
                   <option value="ADDON">Add-on</option>
                   <option value="UPGRADE">Upgrade</option>
                 </Select>
               </Field>
               <Field label="Price" hint={draft.type === "SEASONING" ? "Seasonings are usually free (0)." : undefined}>
-                <MoneyInput value={draft.price} onValueChange={(price) => setDraft({ ...draft, price })} placeholder="0" />
+                <MoneyInput
+                  value={draft.price}
+                  onValueChange={(price) => setDraft({ ...draft, price })}
+                  placeholder="0"
+                />
               </Field>
               <Field label="Available for">
                 <Select

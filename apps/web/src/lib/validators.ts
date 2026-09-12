@@ -149,12 +149,24 @@ export const campaignInput = z
     description: optionalText(300),
     discountType: z.enum(["PERCENT", "AMOUNT"]),
     discountValue: z.number().int().positive("Discount must be greater than 0"),
-    maxDiscount: z.number().int().positive().nullable().optional().transform((v) => v ?? null),
+    maxDiscount: z
+      .number()
+      .int()
+      .positive()
+      .nullable()
+      .optional()
+      .transform((v) => v ?? null),
     minSpend: z.number().int().min(0).default(0),
     claimStartsAt: optionalDay,
     claimEndsAt: optionalDay,
     validDays: z.number().int().min(1, "Vouchers must last at least a day").max(365),
-    quota: z.number().int().positive().nullable().optional().transform((v) => v ?? null),
+    quota: z
+      .number()
+      .int()
+      .positive()
+      .nullable()
+      .optional()
+      .transform((v) => v ?? null),
     isActive: z.boolean().default(true),
   })
   .refine((c) => c.discountType !== "PERCENT" || c.discountValue <= 100, {
@@ -174,7 +186,10 @@ export const claimInput = z.object({
 });
 
 export const verifyClaimInput = z.object({
-  code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code from the email"),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Enter the 6-digit code from the email"),
 });
 
 export type CampaignInput = z.infer<typeof campaignInput>;

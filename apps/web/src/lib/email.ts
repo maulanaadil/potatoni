@@ -37,7 +37,9 @@ export async function sendMail(mail: OutgoingMail): Promise<{ delivered: boolean
     if (process.env.NODE_ENV === "production") {
       throw new HttpError(503, "Email isn't set up yet. Ask the owner to add the SMTP settings.");
     }
-    console.info(`\n──── [email:dev] not sent (no SMTP_HOST) ────\nTo: ${mail.to}\nSubject: ${mail.subject}\n\n${mail.text}\n────────────────────────────────────────────\n`);
+    console.info(
+      `\n──── [email:dev] not sent (no SMTP_HOST) ────\nTo: ${mail.to}\nSubject: ${mail.subject}\n\n${mail.text}\n────────────────────────────────────────────\n`,
+    );
     return { delivered: false };
   }
   try {

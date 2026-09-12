@@ -70,6 +70,5 @@ export const useCart = create<CartState>()(
   ),
 );
 
-export const cartTotal = (lines: CartLine[]) =>
-  lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
+export const cartTotal = (lines: CartLine[]) => lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
 export const cartCount = (lines: CartLine[]) => lines.reduce((sum, l) => sum + l.quantity, 0);

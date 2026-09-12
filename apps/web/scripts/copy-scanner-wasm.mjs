@@ -8,7 +8,10 @@ import path from "node:path";
 const require = createRequire(import.meta.url);
 const detectorEntry = require.resolve("barcode-detector/ponyfill");
 let dir = path.dirname(createRequire(detectorEntry).resolve("zxing-wasm/reader"));
-while (!existsSync(path.join(dir, "package.json")) || JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")).name !== "zxing-wasm") {
+while (
+  !existsSync(path.join(dir, "package.json")) ||
+  JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")).name !== "zxing-wasm"
+) {
   const parent = path.dirname(dir);
   if (parent === dir) throw new Error("zxing-wasm package not found");
   dir = parent;
@@ -16,4 +19,6 @@ while (!existsSync(path.join(dir, "package.json")) || JSON.parse(readFileSync(pa
 const target = path.join(import.meta.dirname, "..", "public", "wasm");
 mkdirSync(target, { recursive: true });
 copyFileSync(path.join(dir, "dist/reader/zxing_reader.wasm"), path.join(target, "zxing_reader.wasm"));
-console.log(`scanner wasm: zxing-wasm@${JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")).version} → public/wasm/zxing_reader.wasm`);
+console.log(
+  `scanner wasm: zxing-wasm@${JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")).version} → public/wasm/zxing_reader.wasm`,
+);

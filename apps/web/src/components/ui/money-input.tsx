@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, type ComponentProps, type KeyboardEvent } from "react";
+import { type ComponentProps, type KeyboardEvent, useLayoutEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 import { inputClass } from "./field";
 
@@ -50,8 +50,10 @@ export function MoneyInput({
     const el = e.currentTarget;
     const start = el.selectionStart ?? 0;
     if (start === el.selectionEnd) {
-      if (e.key === "Backspace" && start > 0 && /\D/.test(el.value[start - 1]!)) el.setSelectionRange(start - 1, start - 1);
-      if (e.key === "Delete" && start < el.value.length && /\D/.test(el.value[start]!)) el.setSelectionRange(start + 1, start + 1);
+      if (e.key === "Backspace" && start > 0 && /\D/.test(el.value[start - 1]!))
+        el.setSelectionRange(start - 1, start - 1);
+      if (e.key === "Delete" && start < el.value.length && /\D/.test(el.value[start]!))
+        el.setSelectionRange(start + 1, start + 1);
     }
     onKeyDown?.(e);
   }

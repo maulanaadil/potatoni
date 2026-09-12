@@ -2,7 +2,7 @@
 
 import { Popover } from "@base-ui/react/popover";
 import { useState } from "react";
-import { DayPicker, type ChevronProps, type Matcher } from "react-day-picker";
+import { type ChevronProps, DayPicker, type Matcher } from "react-day-picker";
 import { cn } from "@/lib/cn";
 import { formatDay, jakartaDateKey } from "@/lib/format";
 
@@ -21,7 +21,14 @@ function Chevron({ orientation = "left", className }: ChevronProps) {
   const rotate = { left: "rotate-0", right: "rotate-180", up: "rotate-90", down: "-rotate-90" }[orientation];
   return (
     <svg viewBox="0 0 24 24" aria-hidden className={cn("size-5", rotate, className)}>
-      <path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M15 5 8 12l7 7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -113,13 +120,15 @@ export function DatePicker({
                 chevron: "",
                 month_grid: "w-full border-collapse",
                 weekdays: "flex",
-                weekday: "w-10 pointer-coarse:w-11 pb-1 text-center text-xs font-bold tracking-wide text-navy-soft uppercase",
+                weekday:
+                  "w-10 pointer-coarse:w-11 pb-1 text-center text-xs font-bold tracking-wide text-navy-soft uppercase",
                 week: "flex",
                 day: "size-10 p-0 text-center pointer-coarse:size-11",
                 day_button:
                   "grid size-10 place-items-center rounded-xl text-sm font-bold tabular-nums pointer-coarse:size-11 outline-none transition-[background-color,color,transform] duration-160 ease-out-strong hover:bg-sun/40 focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97] disabled:pointer-events-none",
                 selected: "[&>button]:bg-navy [&>button]:text-cream [&>button]:hover:bg-navy",
-                today: "[&>button]:underline [&>button]:decoration-sun [&>button]:decoration-[3px] [&>button]:underline-offset-4",
+                today:
+                  "[&>button]:underline [&>button]:decoration-sun [&>button]:decoration-[3px] [&>button]:underline-offset-4",
                 outside: "[&>button]:text-navy/35",
                 disabled: "[&>button]:text-navy/25 [&>button]:line-through",
                 hidden: "invisible",

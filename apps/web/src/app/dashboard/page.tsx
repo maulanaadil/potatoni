@@ -10,8 +10,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const { location: requested } = await searchParams;
   const locations = await getLocationSummaries();
   // Ignore stale ?location= links to deleted locations.
-  const location =
-    requested && (requested === "none" || locations.some((l) => l.id === requested)) ? requested : "all";
+  const location = requested && (requested === "none" || locations.some((l) => l.id === requested)) ? requested : "all";
 
   const [stats, recent] = await Promise.all([
     getDashboardStats({ location }),

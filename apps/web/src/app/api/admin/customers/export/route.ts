@@ -14,7 +14,18 @@ export const GET = handler(async (request) => {
   const session = await requireApiSession("ADMIN");
   const all = new URL(request.url).searchParams.get("all") === "1";
   const customers = await listCustomers({ consentOnly: !all });
-  const header = ["Name", "Email", "WhatsApp", "WhatsApp link", "Email verified", "Agreed to promos", "Vouchers", "Used", "Campaigns", "Joined"];
+  const header = [
+    "Name",
+    "Email",
+    "WhatsApp",
+    "WhatsApp link",
+    "Email verified",
+    "Agreed to promos",
+    "Vouchers",
+    "Used",
+    "Campaigns",
+    "Joined",
+  ];
   const rows = customers.map((c) => [
     c.name,
     c.email,
@@ -27,7 +38,7 @@ export const GET = handler(async (request) => {
     c.campaigns.join("; "),
     c.createdAt.slice(0, 10),
   ]);
-  const csv = "﻿" + [header, ...rows].map((r) => r.map(cell).join(",")).join("\r\n");
+  const csv = `﻿${[header, ...rows].map((r) => r.map(cell).join(",")).join("\r\n")}`;
   await logActivity({
     action: "customer.exported",
     message: `${session.name} exported ${customers.length} ${all ? "customers" : "customers who agreed to promos"}`,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { EmptyState, Panel, SectionTag } from "@/components/ui/brand";
@@ -84,7 +84,13 @@ export function PurchaseBook({ initialPurchases }: { initialPurchases: PurchaseV
         </div>
         <form onSubmit={submit} className="mt-4 flex flex-col gap-3">
           <Field label="Item">
-            <Input value={form.item} onChange={set("item")} placeholder="e.g. Frozen potatoes" required maxLength={80} />
+            <Input
+              value={form.item}
+              onChange={set("item")}
+              placeholder="e.g. Frozen potatoes"
+              required
+              maxLength={80}
+            />
           </Field>
           <div className="grid grid-cols-[1fr_7rem] gap-3">
             <Field label="Quantity">
@@ -95,7 +101,12 @@ export function PurchaseBook({ initialPurchases }: { initialPurchases: PurchaseV
             </Field>
           </div>
           <Field label="Total paid">
-            <MoneyInput value={form.total} onValueChange={(total) => setForm((f) => ({ ...f, total }))} placeholder="150.000" required />
+            <MoneyInput
+              value={form.total}
+              onValueChange={(total) => setForm((f) => ({ ...f, total }))}
+              placeholder="150.000"
+              required
+            />
           </Field>
           <Field label="Supplier (optional)">
             <Input value={form.supplier} onChange={set("supplier")} placeholder="Pasar Kosambi" maxLength={80} />
@@ -122,7 +133,10 @@ export function PurchaseBook({ initialPurchases }: { initialPurchases: PurchaseV
               <div key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
                   <p className="font-bold">
-                    {p.item} <span className="text-navy-soft">· {p.quantity} {p.unit}</span>
+                    {p.item}{" "}
+                    <span className="text-navy-soft">
+                      · {p.quantity} {p.unit}
+                    </span>
                   </p>
                   <p className="truncate text-xs font-semibold text-navy-soft">
                     {formatTime(p.purchasedAt)}
@@ -130,7 +144,9 @@ export function PurchaseBook({ initialPurchases }: { initialPurchases: PurchaseV
                     {p.note && ` · ${p.note}`}
                   </p>
                 </div>
-                <span className="shrink-0 font-display text-lg font-extrabold tabular-nums">{formatRupiah(p.total)}</span>
+                <span className="shrink-0 font-display text-lg font-extrabold tabular-nums">
+                  {formatRupiah(p.total)}
+                </span>
               </div>
             ))}
           </Panel>

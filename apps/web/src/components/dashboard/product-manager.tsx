@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { cn } from "@/lib/cn";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { EmptyState, Panel, PriceRow } from "@/components/ui/brand";
@@ -11,11 +10,16 @@ import { Dialog } from "@/components/ui/dialog";
 import { Checkbox, Field, Input, Select } from "@/components/ui/field";
 import { MoneyInput } from "@/components/ui/money-input";
 import { api } from "@/lib/client";
+import { cn } from "@/lib/cn";
 import { mediaUrl } from "@/lib/format";
 import type { MenuProduct } from "@/lib/services/menu";
 import { ActiveBadge, ConfirmButton, ImageUpload, PageHeader } from "./common";
 
-type VariantDraft = { size: string; grams: string; price: string; isPopular: boolean };
+// rowId is a client-only React key: rows can be removed from the middle, so the index won't do.
+type VariantDraft = { rowId: string; size: string; grams: string; price: string; isPopular: boolean };
+
+let nextRowId = 0;
+const variantRow = (v: Omit<VariantDraft, "rowId">): VariantDraft => ({ rowId: `row-${nextRowId++}`, ...v });
 type Draft = {
   id?: string;
   name: string;
@@ -35,9 +39,9 @@ const blank: Draft = {
   isActive: true,
   sortOrder: "0",
   variants: [
-    { size: "S", grams: "100", price: "", isPopular: false },
-    { size: "M", grams: "150", price: "", isPopular: false },
-    { size: "L", grams: "200", price: "", isPopular: false },
+    variantRow({ size: "S", grams: "100", price: "", isPopular: false }),
+    variantRow({ size: "M", grams: "150", price: "", isPopular: false }),
+    variantRow({ size: "L", grams: "200", price: "", isPopular: false }),
   ],
 };
 
@@ -50,12 +54,9 @@ function toDraft(p: MenuProduct): Draft {
     imageKey: p.imageKey,
     isActive: p.isActive,
     sortOrder: String(p.sortOrder),
-    variants: p.variants.map((v) => ({
-      size: v.size,
-      grams: String(v.grams),
-      price: String(v.price),
-      isPopular: v.isPopular,
-    })),
+    variants: p.variants.map((v) =>
+      variantRow({ size: v.size, grams: String(v.grams), price: String(v.price), isPopular: v.isPopular }),
+    ),
   };
 }
 
@@ -133,13 +134,21 @@ export function ProductManager({ products: initial }: { products: MenuProduct[] 
             <Panel key={p.id} className="flex flex-col gap-3 p-4">
               <div className="relative aspect-[2/1] rounded-2xl bg-cream">
                 {p.imageKey && (
-                  <Image src={mediaUrl(p.imageKey)!} alt={p.name} fill sizes="400px" className="object-contain mix-blend-multiply" />
+                  <Image
+                    src={mediaUrl(p.imageKey)!}
+                    alt={p.name}
+                    fill
+                    sizes="400px"
+                    className="object-contain mix-blend-multiply"
+                  />
                 )}
               </div>
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-display text-xl leading-tight font-extrabold">{p.name}</p>
-                  <p className="text-xs font-bold text-navy-soft uppercase">{p.category === "FRIES" ? "Fries" : "Chicken"}</p>
+                  <p className="text-xs font-bold text-navy-soft uppercase">
+                    {p.category === "FRIES" ? "Fries" : "Chicken"}
+                  </p>
                 </div>
                 <ActiveBadge active={p.isActive} />
               </div>
@@ -162,11 +171,7 @@ export function ProductManager({ products: initial }: { products: MenuProduct[] 
         title={draft?.id ? "Edit product" : "New product"}
         footer={
           <div className="flex justify-between gap-2">
-            {draft?.id ? (
-              <ConfirmButton onConfirm={() => remove(draft.id!)}>Delete</ConfirmButton>
-            ) : (
-              <span />
-            )}
+            {draft?.id ? <ConfirmButton onConfirm={() => remove(draft.id!)}>Delete</ConfirmButton> : <span />}
             <Button intent="sun" onClick={save} disabled={saving}>
               {saving ? "Saving…" : "Save product"}
             </Button>
@@ -175,10 +180,18 @@ export function ProductManager({ products: initial }: { products: MenuProduct[] 
       >
         {draft && (
           <div className="flex flex-col gap-4">
-            <ImageUpload value={draft.imageKey} onChange={(imageKey) => setDraft({ ...draft, imageKey })} folder="menu" />
+            <ImageUpload
+              value={draft.imageKey}
+              onChange={(imageKey) => setDraft({ ...draft, imageKey })}
+              folder="menu"
+            />
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Name">
-                <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} maxLength={60} />
+                <Input
+                  value={draft.name}
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  maxLength={60}
+                />
               </Field>
               <Field label="Category">
                 <Select
@@ -191,15 +204,24 @@ export function ProductManager({ products: initial }: { products: MenuProduct[] 
               </Field>
             </div>
             <Field label="Tagline">
-              <Input value={draft.tagline} onChange={(e) => setDraft({ ...draft, tagline: e.target.value })} maxLength={120} />
+              <Input
+                value={draft.tagline}
+                onChange={(e) => setDraft({ ...draft, tagline: e.target.value })}
+                maxLength={120}
+              />
             </Field>
 
             <div>
               <p className="mb-2 text-sm font-bold">Sizes & prices</p>
               <div className="flex flex-col gap-2">
                 {draft.variants.map((v, i) => (
-                  <div key={i} className="grid grid-cols-[3.5rem_1fr_1.4fr_auto] items-center gap-2">
-                    <Input aria-label="Size" value={v.size} onChange={(e) => setVariant(i, { size: e.target.value })} maxLength={4} />
+                  <div key={v.rowId} className="grid grid-cols-[3.5rem_1fr_1.4fr_auto] items-center gap-2">
+                    <Input
+                      aria-label="Size"
+                      value={v.size}
+                      onChange={(e) => setVariant(i, { size: e.target.value })}
+                      maxLength={4}
+                    />
                     <Input
                       aria-label="Grams"
                       inputMode="numeric"
@@ -207,7 +229,12 @@ export function ProductManager({ products: initial }: { products: MenuProduct[] 
                       value={v.grams}
                       onChange={(e) => setVariant(i, { grams: e.target.value.replace(/\D/g, "") })}
                     />
-                    <MoneyInput aria-label="Price" placeholder="Price" value={v.price} onValueChange={(price) => setVariant(i, { price })} />
+                    <MoneyInput
+                      aria-label="Price"
+                      placeholder="Price"
+                      value={v.price}
+                      onValueChange={(price) => setVariant(i, { price })}
+                    />
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
@@ -239,7 +266,10 @@ export function ProductManager({ products: initial }: { products: MenuProduct[] 
                 size="sm"
                 className="mt-2"
                 onClick={() =>
-                  setDraft({ ...draft, variants: [...draft.variants, { size: "", grams: "", price: "", isPopular: false }] })
+                  setDraft({
+                    ...draft,
+                    variants: [...draft.variants, variantRow({ size: "", grams: "", price: "", isPopular: false })],
+                  })
                 }
               >
                 + Add size

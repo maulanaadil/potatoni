@@ -89,7 +89,11 @@ export async function getPublicCampaign(slug: string) {
 }
 export type PublicCampaign = NonNullable<Awaited<ReturnType<typeof getPublicCampaign>>>;
 
-async function sendClaimCode(claim: { id: string; otpSentCount: number; otpLastSentAt: Date | null }, to: { name: string; email: string }, campaignName: string) {
+async function sendClaimCode(
+  claim: { id: string; otpSentCount: number; otpLastSentAt: Date | null },
+  to: { name: string; email: string },
+  campaignName: string,
+) {
   if (claim.otpLastSentAt && Date.now() - claim.otpLastSentAt.getTime() < RESEND_COOLDOWN_MS) {
     throw new HttpError(429, "Please wait 30 seconds before asking for another code");
   }
@@ -144,7 +148,9 @@ export async function startClaim(
     throw new HttpError(409, "You already have this voucher — we've sent it to your email again.");
   }
   if (!claim) {
-    claim = await db.voucherClaim.create({ data: { campaignId: campaign.id, customerId: customer.id, phone: input.phone } });
+    claim = await db.voucherClaim.create({
+      data: { campaignId: campaign.id, customerId: customer.id, phone: input.phone },
+    });
   } else if (claim.phone !== input.phone) {
     claim = await db.voucherClaim.update({ where: { id: claim.id }, data: { phone: input.phone } });
   }
@@ -154,14 +160,20 @@ export async function startClaim(
 }
 
 export async function resendClaimCode(claimId: string) {
-  const claim = await db.voucherClaim.findUnique({ where: { id: claimId }, include: { customer: true, campaign: true } });
-  if (!claim || claim.status !== "PENDING") throw new HttpError(404, "Start again from the voucher page");
+  const claim = await db.voucherClaim.findUnique({
+    where: { id: claimId },
+    include: { customer: true, campaign: true },
+  });
+  if (claim?.status !== "PENDING") throw new HttpError(404, "Start again from the voucher page");
   const { devCode } = await sendClaimCode(claim, claim.customer, claim.campaign.name);
   return { email: maskEmail(claim.customer.email), devCode };
 }
 
 export async function verifyClaim(claimId: string, code: string, baseUrl: string) {
-  const claim = await db.voucherClaim.findUnique({ where: { id: claimId }, include: { campaign: true, customer: true } });
+  const claim = await db.voucherClaim.findUnique({
+    where: { id: claimId },
+    include: { campaign: true, customer: true },
+  });
   if (!claim) throw new HttpError(404, "Start again from the voucher page");
   if (claim.status !== "PENDING") throw new HttpError(409, "This voucher is already verified — check your email.");
   if (!claim.otpHash || !claim.otpExpiresAt) throw new HttpError(400, "Ask for a code first");
@@ -170,7 +182,12 @@ export async function verifyClaim(claimId: string, code: string, baseUrl: string
   if (!safeEqual(hashOtp(claim.id, code), claim.otpHash)) {
     await db.voucherClaim.update({ where: { id: claim.id }, data: { otpAttempts: { increment: 1 } } });
     const left = MAX_ATTEMPTS - claim.otpAttempts - 1;
-    throw new HttpError(400, left > 0 ? `That code isn't right. ${left} ${left === 1 ? "try" : "tries"} left.` : "Too many wrong codes. Tap “Send a new code”.");
+    throw new HttpError(
+      400,
+      left > 0
+        ? `That code isn't right. ${left} ${left === 1 ? "try" : "tries"} left.`
+        : "Too many wrong codes. Tap “Send a new code”.",
+    );
   }
   await assertClaimable(claim.campaign);
 
@@ -189,7 +206,10 @@ export async function verifyClaim(claimId: string, code: string, baseUrl: string
       if (!clash || attempt >= 4) throw err;
     }
   }
-  await db.customer.update({ where: { id: claim.customerId }, data: { emailVerifiedAt: claim.customer.emailVerifiedAt ?? issuedAt } });
+  await db.customer.update({
+    where: { id: claim.customerId },
+    data: { emailVerifiedAt: claim.customer.emailVerifiedAt ?? issuedAt },
+  });
 
   const voucher = await getVoucherByClaim(claim.id);
   await logActivity({
@@ -209,7 +229,10 @@ export async function verifyClaim(claimId: string, code: string, baseUrl: string
 /* ───────────── Voucher views & email ───────────── */
 
 async function getVoucherByClaim(claimId: string) {
-  const claim = await db.voucherClaim.findUniqueOrThrow({ where: { id: claimId }, include: { campaign: true, customer: true } });
+  const claim = await db.voucherClaim.findUniqueOrThrow({
+    where: { id: claimId },
+    include: { campaign: true, customer: true },
+  });
   return toVoucherView(claim);
 }
 
@@ -229,12 +252,18 @@ function toVoucherView(claim: Prisma.VoucherClaimGetPayload<{ include: { campaig
 export type VoucherView = ReturnType<typeof toVoucherView>;
 
 export async function getVoucherByCode(code: string) {
-  const claim = await db.voucherClaim.findUnique({ where: { code: code.toUpperCase() }, include: { campaign: true, customer: true } });
+  const claim = await db.voucherClaim.findUnique({
+    where: { code: code.toUpperCase() },
+    include: { campaign: true, customer: true },
+  });
   return claim && claim.status !== "PENDING" ? toVoucherView(claim) : null;
 }
 
 async function sendVoucherEmail(claimId: string, baseUrl: string) {
-  const claim = await db.voucherClaim.findUniqueOrThrow({ where: { id: claimId }, include: { campaign: true, customer: true } });
+  const claim = await db.voucherClaim.findUniqueOrThrow({
+    where: { id: claimId },
+    include: { campaign: true, customer: true },
+  });
   if (!claim.code || !claim.expiresAt) return;
   const qr = await QRCode.toBuffer(claim.code, { margin: 1, width: 360, color: { dark: "#2a2670", light: "#ffffff" } });
   await sendMail({

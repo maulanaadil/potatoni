@@ -1,11 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/brand";
 import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/client";
+import { cn } from "@/lib/cn";
 
 const LINKS = [
   { href: "/dashboard", label: "Overview", icon: "📊" },
