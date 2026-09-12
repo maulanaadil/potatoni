@@ -9,6 +9,7 @@ import { EmptyState, Panel, Sparkles } from "@/components/ui/brand";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/field";
+import { ImageEditor } from "@/components/ui/image-editor";
 import { ImageViewer } from "@/components/ui/image-viewer";
 import { CHATS_URL, useAssistant, useAssistantSession } from "@/lib/assistant";
 import { type AssistantChatSummary, type AssistantMessage, MAX_ASSISTANT_IMAGES } from "@/lib/assistant-types";
@@ -401,7 +402,22 @@ export function AssistantComposer({
   const [uploading, setUploading] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const [viewer, setViewer] = useState({ open: false, index: 0 });
+  const [editing, setEditing] = useState<string | null>(null);
   const full = attachments.length + uploading >= MAX_ASSISTANT_IMAGES;
+
+  async function replaceEdited(file: File) {
+    if (!editing) return;
+    try {
+      const body = new FormData();
+      body.set("file", await shrinkImage(file));
+      body.set("folder", "assistant");
+      const { key } = await api<{ key: string }>("/api/admin/uploads", { body });
+      setAttachments((keys) => keys.map((k) => (k === editing ? key : k)));
+      setEditing(null);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
 
   async function attach(files: File[]) {
     const images = files.filter((f) => f.type.startsWith("image/"));
@@ -462,8 +478,21 @@ export function AssistantComposer({
               >
                 ×
               </button>
+              <button
+                type="button"
+                aria-label="Edit image"
+                onClick={() => setEditing(key)}
+                className="absolute bottom-0.5 left-0.5 grid size-6 place-items-center rounded-full border border-navy/20 bg-paper/90 text-xs text-navy outline-none transition-transform duration-160 ease-out-strong focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97]"
+              >
+                ✎
+              </button>
             </div>
           ))}
+          <ImageEditor
+            src={editing ? (mediaUrl(editing) ?? null) : null}
+            onCancel={() => setEditing(null)}
+            onDone={replaceEdited}
+          />
           {uploading > 0 && (
             <div className="grid size-16 animate-pulse place-items-center rounded-xl bg-navy/10 text-xs font-bold text-navy-soft motion-reduce:animate-none">
               Uploading…
