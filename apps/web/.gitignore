@@ -38,3 +38,6 @@ next-env.d.ts
 
 # Prisma generated client
 /src/generated
+
+# Copied from zxing-wasm on install (scripts/copy-scanner-wasm.mjs)
+/public/wasm

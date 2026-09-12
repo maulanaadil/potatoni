@@ -5,9 +5,13 @@ export const jakartaToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: T
 
 /** "Saturday, 12 September 2026" for the system prompt. */
 export const jakartaTodayLabel = () =>
-  new Intl.DateTimeFormat("en-GB", { timeZone: TIMEZONE, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(
-    new Date(),
-  );
+  new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIMEZONE,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
 
 export function addDays(key: string, n: number) {
   const d = new Date(`${key}T00:00:00Z`);

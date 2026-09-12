@@ -42,7 +42,7 @@ export async function resolveLocationId(input: string | null | undefined) {
   if (input === null) return null;
   if (input === undefined) return (await getScheduledLocation())?.id ?? null;
   const location = await db.location.findUnique({ where: { id: input } });
-  if (!location || !location.isActive) throw new HttpError(400, "That location is no longer available");
+  if (!location?.isActive) throw new HttpError(400, "That location is no longer available");
   return location.id;
 }
 
@@ -83,16 +83,32 @@ export async function getLocationSummaries(): Promise<LocationSummary[]> {
     }),
     db.orderItem.findMany({
       where: { order: { status: "PAID" } },
-      select: { productName: true, variantSize: true, quantity: true, lineTotal: true, order: { select: { locationId: true } } },
+      select: {
+        productName: true,
+        variantSize: true,
+        quantity: true,
+        lineTotal: true,
+        order: { select: { locationId: true } },
+      },
     }),
     db.purchase.groupBy({ by: ["locationId"], _sum: { total: true } }),
   ]);
 
-  type Acc = { orders: number; sales: number; days: Set<string>; first?: Date; last?: Date; products: Map<string, { quantity: number; revenue: number }> };
+  type Acc = {
+    orders: number;
+    sales: number;
+    days: Set<string>;
+    first?: Date;
+    last?: Date;
+    products: Map<string, { quantity: number; revenue: number }>;
+  };
   const acc = new Map<string | null, Acc>();
   const bucket = (id: string | null) => {
     let a = acc.get(id);
-    if (!a) acc.set(id, (a = { orders: 0, sales: 0, days: new Set(), products: new Map() }));
+    if (!a) {
+      a = { orders: 0, sales: 0, days: new Set(), products: new Map() };
+      acc.set(id, a);
+    }
     return a;
   };
 
@@ -114,7 +130,13 @@ export async function getLocationSummaries(): Promise<LocationSummary[]> {
   }
   const purchaseTotals = new Map(purchases.map((p) => [p.locationId, p._sum.total ?? 0]));
 
-  const summarize = (id: string | null, base: Omit<LocationSummary, "orders" | "sales" | "purchases" | "net" | "sellingDays" | "salesPerDay" | "firstSale" | "lastSale" | "products">): LocationSummary => {
+  const summarize = (
+    id: string | null,
+    base: Omit<
+      LocationSummary,
+      "orders" | "sales" | "purchases" | "net" | "sellingDays" | "salesPerDay" | "firstSale" | "lastSale" | "products"
+    >,
+  ): LocationSummary => {
     const a = acc.get(id);
     const spent = purchaseTotals.get(id) ?? 0;
     const sales = a?.sales ?? 0;

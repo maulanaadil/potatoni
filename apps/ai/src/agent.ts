@@ -29,12 +29,16 @@ export async function chat(messages: ChatMessage[], user: { name: string }) {
   const history: Anthropic.Beta.BetaMessageParam[] = messages.map((m) => ({ role: m.role, content: m.content }));
   const system = systemPrompt({ userName: user.name, today: jakartaTodayLabel() });
   const used = new Set<string>();
+  // Web search filters its results in a code-execution container, and Claude may call our tools
+  // from inside it; once the API has opened one, every later request must name it.
+  let container: string | undefined;
 
   for (let round = 1; ; round++) {
     const response = await client.beta.messages.create({
       model: env.anthropicModel,
       max_tokens: 16000,
       ...REFUSAL_FALLBACK,
+      ...(container ? { container } : {}),
       // Caches tools + system + the conversation so far, so each tool round re-reads it cheaply.
       cache_control: { type: "ephemeral" },
       system,
@@ -42,6 +46,7 @@ export async function chat(messages: ChatMessage[], user: { name: string }) {
       ...(round === MAX_ROUNDS ? { tool_choice: { type: "none" } } : {}),
       messages: history,
     });
+    container = response.container?.id ?? container;
 
     for (const block of response.content) {
       if (block.type === "tool_use" || block.type === "server_tool_use") used.add(block.name);
@@ -64,7 +69,12 @@ export async function chat(messages: ChatMessage[], user: { name: string }) {
       const results = await Promise.all(
         calls.map(async (call): Promise<Anthropic.Beta.BetaToolResultBlockParam> => {
           const result = await runTool(call.name, call.input);
-          return { type: "tool_result", tool_use_id: call.id, content: JSON.stringify(result), is_error: isToolError(result) };
+          return {
+            type: "tool_result",
+            tool_use_id: call.id,
+            content: JSON.stringify(result),
+            is_error: isToolError(result),
+          };
         }),
       );
       history.push({ role: "user", content: results });

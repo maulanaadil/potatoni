@@ -5,9 +5,9 @@ import { toast } from "sonner";
 import useSWR from "swr";
 import { EmptyState } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog } from "@/components/ui/dialog";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/field";
-import { DatePicker } from "@/components/ui/date-picker";
 import { api } from "@/lib/client";
 import type { LocationSummary } from "@/lib/services/locations";
 import { ConfirmButton, PageHeader } from "./common";
@@ -86,8 +86,8 @@ export function LocationManager({ locations: initial }: { locations: LocationSum
 
       {scheduled.length === 0 ? (
         <EmptyState title="No locations yet">
-          Add where you&apos;ll sell next, e.g. “SMA Trinitas Bandung” from tomorrow. The register picks it up automatically on
-          its start date.
+          Add where you&apos;ll sell next, e.g. “SMA Trinitas Bandung” from tomorrow. The register picks it up
+          automatically on its start date.
         </EmptyState>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -157,7 +157,13 @@ export function LocationManager({ locations: initial }: { locations: LocationSum
               <DatePicker clearable value={draft.startsOn} onChange={(v) => setDraft({ ...draft, startsOn: v })} />
             </Field>
             <Field label="Ends on" hint="Leave empty if you stay until the next move.">
-              <DatePicker clearable placeholder="Until next move" min={draft.startsOn} value={draft.endsOn} onChange={(v) => setDraft({ ...draft, endsOn: v })} />
+              <DatePicker
+                clearable
+                placeholder="Until next move"
+                min={draft.startsOn}
+                value={draft.endsOn}
+                onChange={(v) => setDraft({ ...draft, endsOn: v })}
+              />
             </Field>
             <Field label="Notes (optional)" className="sm:col-span-2">
               <Textarea

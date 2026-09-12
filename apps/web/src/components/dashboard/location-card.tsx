@@ -71,7 +71,10 @@ export function LocationCard({
                 <span className="shrink-0 font-semibold text-navy-soft tabular-nums">{p.quantity}×</span>
               </div>
               <div className="mt-0.5 h-1.5 rounded-full bg-chart-sales/15">
-                <div className="h-full rounded-full bg-chart-sales" style={{ width: `${(p.quantity / maxQty) * 100}%` }} />
+                <div
+                  className="h-full rounded-full bg-chart-sales"
+                  style={{ width: `${(p.quantity / maxQty) * 100}%` }}
+                />
               </div>
             </li>
           ))}

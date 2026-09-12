@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { handler, HttpError, parseBody, requireApiSession } from "@/lib/api";
+import { HttpError, handler, parseBody, requireApiSession } from "@/lib/api";
 import { getSessionToken } from "@/lib/auth";
 import { assistantInput } from "@/lib/validators";
 
-// Answers can take a few tool calls + model rounds.
-const TIMEOUT_MS = 120_000;
+// Answers can take several tool rounds plus a web search (~1.5 min for the long ones).
+const TIMEOUT_MS = 180_000;
 
 /** Proxies the dashboard chat to the assistant service (apps/ai), which re-checks the JWT. */
 export const POST = handler(async (request) => {
@@ -24,6 +24,9 @@ export const POST = handler(async (request) => {
     throw new HttpError(503, "The assistant service isn't running (apps/ai)");
   });
 
-  const data = (await res.json().catch(() => ({ error: "The assistant sent an invalid answer" }))) as Record<string, unknown>;
+  const data = (await res.json().catch(() => ({ error: "The assistant sent an invalid answer" }))) as Record<
+    string,
+    unknown
+  >;
   return NextResponse.json(data, { status: res.status });
 });

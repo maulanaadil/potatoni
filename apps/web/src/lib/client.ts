@@ -1,8 +1,5 @@
 /** Tiny fetch wrapper for client components: JSON in, JSON out, English error messages. */
-export async function api<T>(
-  url: string,
-  options: { method?: string; body?: unknown } = {},
-): Promise<T> {
+export async function api<T>(url: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
   const isForm = options.body instanceof FormData;
   const res = await fetch(url, {
     method: options.method ?? (options.body ? "POST" : "GET"),

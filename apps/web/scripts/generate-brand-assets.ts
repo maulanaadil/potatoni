@@ -21,11 +21,18 @@ const svg = await readFile(path.join(root, "assets/source/icon.svg"), "utf8");
 // Full-bleed square for iOS and Android masks (they round the corners themselves).
 const squareSvg = svg.replace(/<rect width="512" height="512" rx="116"/, '<rect width="512" height="512"');
 // Maskable icons need the artwork inside the central 80% safe zone.
-const maskableSvg = squareSvg.replace(/<rect width="512" height="512" fill="#2a2670"\/>\n  <g /, '<rect width="512" height="512" fill="#2a2670"/>\n  <g transform="translate(51.2 51.2) scale(0.8)"><g ')
+const maskableSvg = squareSvg
+  .replace(
+    /<rect width="512" height="512" fill="#2a2670"\/>\n {2}<g /,
+    '<rect width="512" height="512" fill="#2a2670"/>\n  <g transform="translate(51.2 51.2) scale(0.8)"><g ',
+  )
   .replace(/<\/svg>\s*$/, "</g></svg>\n");
 
 const png = (source: string, size: number) =>
-  sharp(Buffer.from(source), { density: Math.max(72, (72 * size) / 512 * 4) }).resize(size, size).png().toBuffer();
+  sharp(Buffer.from(source), { density: Math.max(72, ((72 * size) / 512) * 4) })
+    .resize(size, size)
+    .png()
+    .toBuffer();
 
 /** ICO container with PNG-encoded entries (supported by every current browser). */
 function toIco(images: { size: number; data: Buffer }[]) {

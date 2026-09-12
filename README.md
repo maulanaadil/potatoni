@@ -78,7 +78,7 @@ CI runs on every pull request and every push to `main`. It has four parallel job
 | Job | Checks |
 | --- | --- |
 | Dependencies | no `yarn.lock` / `package-lock.json` / `bun.lock`; `pnpm install --frozen-lockfile`; `pnpm audit --prod --audit-level high` |
-| Lint | `pnpm lint` (ESLint, zero warnings) |
+| Lint | `pnpm lint` (Biome formatting/imports/lint in every workspace, then ESLint in `apps/web`, zero warnings) |
 | Typecheck | `pnpm check-types` |
 | Build | `pnpm build` (Prisma client + Next.js), using placeholder `DATABASE_URL`/`APP_URL`, so no secrets are needed |
 
@@ -87,6 +87,37 @@ CI runs on every pull request and every push to `main`. It has four parallel job
 - A new push cancels the run it replaces.
 - Turbo runs in strict env mode, so `turbo.json` declares the build's variables: `APP_URL` is part of the cache key, and `DATABASE_URL` is passed through.
 - Security overrides for transitive dependencies live in `pnpm-workspace.yaml`. Remove each one once its parent package ships the fix.
+
+### Linting and formatting
+
+[Biome](https://biomejs.dev) formats, sorts imports and lints every workspace from one root `biome.jsonc`. `apps/web/biome.json` extends it (`"extends": "//"`) and adds the Next.js, React and Tailwind settings. ESLint is kept only for the rules Biome doesn't have yet: the React Compiler checks from `eslint-plugin-react-hooks` and Next.js's own checks.
+
+| Command | What it does |
+| --- | --- |
+| `pnpm lint` | `biome check` in each workspace plus the root config files, then ESLint in `apps/web`. Fails on any finding. |
+| `pnpm format` | `biome check --write .` formats, organizes imports and applies safe fixes across the repo. |
+
+In VS Code, install the recommended Biome extension. `.vscode/settings.json` formats on save.
+
+### Deploy (`.github/workflows/deploy.yml`)
+
+Every merge to `main` deploys to production at https://potatoni.aallatif.my.id, but only after CI passes on that commit.
+
+1. CI finishes on the push to `main`.
+2. **Deploy** checks out that exact commit and runs `vercel pull` (project settings plus production env vars), `vercel build --prod`, then `vercel deploy --prebuilt --prod`.
+3. The job runs in the GitHub `production` environment (limited to `main`), and the deployment URL shows up on the run and under the repo's **Environments**.
+
+Setup (once):
+
+| Where | Name | Value |
+| --- | --- | --- |
+| `production` environment → secret | `VERCEL_TOKEN` | A token from https://vercel.com/account/tokens, scoped to the project's team |
+| `production` environment → variable | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | From `.vercel/project.json` (already set) |
+
+- Vercel's own Git deploys are off (`"git": { "deploymentEnabled": false }` in `apps/web/vercel.json`), so a merge never deploys twice or skips CI.
+- Deploys queue instead of cancelling each other, so a deploy is never stopped halfway.
+- To redeploy `main` without a new commit (for example after changing an env var in Vercel), use **Actions → Deploy → Run workflow**.
+- Database migrations aren't part of the deploy. Run `pnpm --filter web db:deploy` against production before merging a PR that changes `schema.prisma`.
 
 ### Scripts (`apps/web`)
 

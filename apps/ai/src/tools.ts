@@ -1,6 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import { readOnly, type Query } from "./db.ts";
+import { type Query, readOnly } from "./db.ts";
 import { addDays, daysBetween, jakartaToday, wib } from "./time.ts";
 
 // The assistant's view of the business. Every tool is a fixed, read-only query: the model
@@ -138,7 +138,15 @@ const TOOLS = [
           customer_list: customers,
           vouchers,
           locations: spots.map(({ id, name, address, notes, starts_on, ends_on, status, orders, sales }) => ({
-            id, name, address, notes, starts_on, ends_on, status, orders, sales,
+            id,
+            name,
+            address,
+            notes,
+            starts_on,
+            ends_on,
+            status,
+            orders,
+            sales,
           })),
           data_note: sales?.paid_orders
             ? undefined
@@ -254,12 +262,17 @@ const TOOLS = [
     description:
       "Every spot/event the stall is booked at (school bazaars, campus events…) with dates, notes and status (current, upcoming, ended, unscheduled), days until an upcoming one starts, and how each performed: orders, sales, stock purchases, net and sales per selling day. Use this first for 'what's our next event' questions.",
     args: z.object({
-      status: z.enum(["current", "upcoming", "ended", "unscheduled"]).optional().describe("Only locations with this status."),
+      status: z
+        .enum(["current", "upcoming", "ended", "unscheduled"])
+        .optional()
+        .describe("Only locations with this status."),
     }),
     run: ({ status }) =>
       readOnly(async (q) => {
         const all = await locations(q);
-        const next = all.filter((l) => l.status === "upcoming").sort((a, b) => (a.starts_on ?? "").localeCompare(b.starts_on ?? ""))[0];
+        const next = all
+          .filter((l) => l.status === "upcoming")
+          .sort((a, b) => (a.starts_on ?? "").localeCompare(b.starts_on ?? ""))[0];
         return {
           today: jakartaToday(),
           next_booked_event: next?.name ?? null,
@@ -335,12 +348,15 @@ const TOOLS = [
           today,
           campaigns: rows.map((c) => ({
             ...c,
-            claiming:
-              !c.is_active ? "switched off"
-              : c.claim_starts_at && c.claim_starts_at > today ? "not started"
-              : c.claim_ends_at && c.claim_ends_at < today ? "ended"
-              : c.quota != null && c.issued >= c.quota ? "sold out"
-              : "open",
+            claiming: !c.is_active
+              ? "switched off"
+              : c.claim_starts_at && c.claim_starts_at > today
+                ? "not started"
+                : c.claim_ends_at && c.claim_ends_at < today
+                  ? "ended"
+                  : c.quota != null && c.issued >= c.quota
+                    ? "sold out"
+                    : "open",
             redemption_rate: c.issued ? +(c.redeemed / c.issued).toFixed(3) : null,
           })),
         };
@@ -386,7 +402,13 @@ export const tools: Anthropic.Beta.BetaToolUnion[] = [
     type: "web_search_20260209",
     name: "web_search",
     max_uses: 5,
-    user_location: { type: "approximate", city: "Bandung", region: "West Java", country: "ID", timezone: "Asia/Jakarta" },
+    user_location: {
+      type: "approximate",
+      city: "Bandung",
+      region: "West Java",
+      country: "ID",
+      timezone: "Asia/Jakarta",
+    },
   },
 ];
 

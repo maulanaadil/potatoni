@@ -1,10 +1,10 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { useState } from "react";
 import useSWRInfinite from "swr/infinite";
 import { EmptyState, Panel } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 import { formatDateTime } from "@/lib/format";
 import { PageHeader } from "./common";
 
@@ -125,7 +125,11 @@ export function ActivityFeed({ initial, initialCursor }: { initial: ActivityView
               <span
                 className={cn(
                   "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-extrabold uppercase",
-                  a.source === "POS" ? "bg-sun text-navy" : a.source === "PUBLIC" ? "bg-leaf text-paper" : "bg-navy text-cream",
+                  a.source === "POS"
+                    ? "bg-sun text-navy"
+                    : a.source === "PUBLIC"
+                      ? "bg-leaf text-paper"
+                      : "bg-navy text-cream",
                 )}
               >
                 {a.source === "POS" ? "Register" : a.source === "PUBLIC" ? "Customer" : "Dashboard"}

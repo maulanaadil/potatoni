@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { SESSION_COOKIE, verifySession, type Role, type Session } from "./session";
+import { type Role, SESSION_COOKIE, type Session, verifySession } from "./session";
 
 /**
  * The raw JWT from `Authorization: Bearer` or the session cookie. Also forwarded to

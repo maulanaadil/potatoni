@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { UserManager, type InviteView, type UserView } from "@/components/dashboard/user-manager";
+import { type InviteView, UserManager, type UserView } from "@/components/dashboard/user-manager";
 import { requirePageSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listOpenInvites } from "@/lib/services/invites";

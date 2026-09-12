@@ -35,42 +35,52 @@ async function resolveRange(location: LocationFilter, days: number) {
 
   const to = end && end < today ? end : today;
   const from = daysBetween(start, to) > MAX_DAYS ? addDays(to, -(MAX_DAYS - 1)) : start;
-  return { from, to, label: from === start ? "Whole run at this location" : `Last ${MAX_DAYS} days here`, location: loc };
+  return {
+    from,
+    to,
+    label: from === start ? "Whole run at this location" : `Last ${MAX_DAYS} days here`,
+    location: loc,
+  };
 }
 
-export async function getDashboardStats({ location = "all", days = 14 }: { location?: LocationFilter; days?: number } = {}) {
+export async function getDashboardStats({
+  location = "all",
+  days = 14,
+}: {
+  location?: LocationFilter;
+  days?: number;
+} = {}) {
   const range = await resolveRange(location, days);
   const where = location === "all" ? {} : { locationId: location === "none" ? null : location };
   const rangeFrom = wibStart(range.from);
   const rangeTo = startOfJakartaDay(new Date(`${range.to}T12:00:00+07:00`), 1);
   const today = startOfJakartaDay();
 
-  const [paidInRange, purchasesInRange, pendingToday, cancelledToday, topItems, paymentSplit] =
-    await Promise.all([
-      db.order.findMany({
-        where: { ...where, status: "PAID", createdAt: { gte: rangeFrom, lt: rangeTo } },
-        select: { createdAt: true, total: true },
-      }),
-      db.purchase.findMany({
-        where: { ...where, purchasedAt: { gte: rangeFrom, lt: rangeTo } },
-        select: { purchasedAt: true, total: true },
-      }),
-      db.order.count({ where: { ...where, status: "PENDING", createdAt: { gte: today } } }),
-      db.order.count({ where: { ...where, status: "CANCELLED", createdAt: { gte: today } } }),
-      db.orderItem.groupBy({
-        by: ["productName", "variantSize"],
-        where: { order: { ...where, status: "PAID", createdAt: { gte: rangeFrom, lt: rangeTo } } },
-        _sum: { quantity: true, lineTotal: true },
-        orderBy: { _sum: { quantity: "desc" } },
-        take: 8,
-      }),
-      db.order.groupBy({
-        by: ["paymentMethod"],
-        where: { ...where, status: "PAID", createdAt: { gte: rangeFrom, lt: rangeTo } },
-        _sum: { total: true },
-        _count: true,
-      }),
-    ]);
+  const [paidInRange, purchasesInRange, pendingToday, cancelledToday, topItems, paymentSplit] = await Promise.all([
+    db.order.findMany({
+      where: { ...where, status: "PAID", createdAt: { gte: rangeFrom, lt: rangeTo } },
+      select: { createdAt: true, total: true },
+    }),
+    db.purchase.findMany({
+      where: { ...where, purchasedAt: { gte: rangeFrom, lt: rangeTo } },
+      select: { purchasedAt: true, total: true },
+    }),
+    db.order.count({ where: { ...where, status: "PENDING", createdAt: { gte: today } } }),
+    db.order.count({ where: { ...where, status: "CANCELLED", createdAt: { gte: today } } }),
+    db.orderItem.groupBy({
+      by: ["productName", "variantSize"],
+      where: { order: { ...where, status: "PAID", createdAt: { gte: rangeFrom, lt: rangeTo } } },
+      _sum: { quantity: true, lineTotal: true },
+      orderBy: { _sum: { quantity: "desc" } },
+      take: 8,
+    }),
+    db.order.groupBy({
+      by: ["paymentMethod"],
+      where: { ...where, status: "PAID", createdAt: { gte: rangeFrom, lt: rangeTo } },
+      _sum: { total: true },
+      _count: true,
+    }),
+  ]);
 
   const series = new Map<string, { date: string; sales: number; purchases: number; orders: number }>();
   for (let i = 0; i < daysBetween(range.from, range.to); i++) {

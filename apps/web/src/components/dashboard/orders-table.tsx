@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { EmptyState, Panel, StatusBadge } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
-import { DatePicker } from "@/components/ui/date-picker";
 import { api } from "@/lib/client";
 import { formatDateTime, formatRupiah } from "@/lib/format";
 import type { OrderView } from "@/lib/views";
@@ -249,7 +249,9 @@ export function OrdersTable({
             </ul>
             {selected.discount > 0 && (
               <p className="flex justify-between text-sm font-bold text-leaf">
-                <span>🎟️ {selected.voucherClaim?.code} · {selected.voucherClaim?.campaign.name}</span>
+                <span>
+                  🎟️ {selected.voucherClaim?.code} · {selected.voucherClaim?.campaign.name}
+                </span>
                 <span className="tabular-nums">−{formatRupiah(selected.discount)}</span>
               </p>
             )}

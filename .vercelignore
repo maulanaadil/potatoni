@@ -1,0 +1,21 @@
+# What a `vercel deploy` from a local checkout must never upload.
+# (Git-connected deploys build from the repo, which already excludes these.)
+
+# Local secrets — production values live in Vercel's environment variables.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local tooling, agent context and build output
+.context
+.claude
+.agents
+.vercel
+node_modules
+**/node_modules
+**/.next
+**/.turbo
+apps/web/src/generated

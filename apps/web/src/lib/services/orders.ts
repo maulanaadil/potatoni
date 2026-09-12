@@ -1,13 +1,13 @@
 import "server-only";
-import { Prisma, type PaymentMethod } from "@/generated/prisma/client";
+import { type PaymentMethod, Prisma } from "@/generated/prisma/client";
 import { logActivity } from "../activity";
 import { HttpError } from "../api";
 import { db } from "../db";
 import { formatRupiah, jakartaDateKey, startOfJakartaDay } from "../format";
+import type { Session } from "../session";
+import { type CreateOrderInput, MAX_SEASONINGS } from "../validators";
 import { resolveLocationId } from "./locations";
 import { evaluateVoucher } from "./vouchers";
-import type { Session } from "../session";
-import { MAX_SEASONINGS, type CreateOrderInput } from "../validators";
 
 export const orderInclude = {
   items: { orderBy: { id: "asc" } },
@@ -38,7 +38,7 @@ async function priceItems(items: CreateOrderInput["items"]) {
 
   return items.map((item) => {
     const variant = variantById.get(item.variantId);
-    if (!variant || !variant.product.isActive) {
+    if (!variant?.product.isActive) {
       throw new HttpError(400, "An item in the cart is no longer available");
     }
     const chosen = [...new Set(item.modifierIds)].map((id) => {
@@ -112,15 +112,21 @@ export async function createOrder(input: CreateOrderInput, session: Session) {
             session,
             entityType: "order",
             entityId: order.id,
-            meta: { total: order.total, discount, items: items.length, paymentMethod: input.paymentMethod, locationId, voucher: voucher?.code },
+            meta: {
+              total: order.total,
+              discount,
+              items: items.length,
+              paymentMethod: input.paymentMethod,
+              locationId,
+              voucher: voucher?.code,
+            },
           },
           tx,
         );
         return order;
       });
     } catch (err) {
-      const isCodeClash =
-        err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
+      const isCodeClash = err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
       if (!isCodeClash || attempt >= 4) throw err;
     }
   }
@@ -153,7 +159,10 @@ export async function payOrder(
       include: orderInclude,
     });
     if (order.voucherClaimId) {
-      await tx.voucherClaim.update({ where: { id: order.voucherClaimId }, data: { status: "REDEEMED", redeemedAt: new Date() } });
+      await tx.voucherClaim.update({
+        where: { id: order.voucherClaimId },
+        data: { status: "REDEEMED", redeemedAt: new Date() },
+      });
     }
     await logActivity(
       {
@@ -185,7 +194,10 @@ export async function cancelOrder(id: string, session: Session, source: "POS" | 
       include: orderInclude,
     });
     if (order.voucherClaimId) {
-      await tx.voucherClaim.update({ where: { id: order.voucherClaimId }, data: { status: "ISSUED", redeemedAt: null } });
+      await tx.voucherClaim.update({
+        where: { id: order.voucherClaimId },
+        data: { status: "ISSUED", redeemedAt: null },
+      });
     }
     await logActivity(
       {

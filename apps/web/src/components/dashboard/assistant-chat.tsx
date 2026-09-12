@@ -1,15 +1,15 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, type ReactNode, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Panel, Sparkles } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/field";
 import { api } from "@/lib/client";
+import { cn } from "@/lib/cn";
 import { PageHeader } from "./common";
 
-type Message = { role: "user" | "assistant"; content: string; tools?: string[] };
+type Message = { id: string; role: "user" | "assistant"; content: string; tools?: string[] };
 
 const SUGGESTIONS = [
   "How are sales going, and what should we do to sell more this week?",
@@ -35,8 +35,9 @@ export function AssistantChat({ name }: { name: string }) {
   const [busy, setBusy] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
 
+  // Follow new messages and the "Checking the numbers…" line.
   useEffect(() => {
-    if (messages.length === 0) return;
+    if (messages.length === 0 && !busy) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     bottom.current?.scrollIntoView({ block: "end", behavior: reduce ? "auto" : "smooth" });
   }, [messages.length, busy]);
@@ -45,7 +46,7 @@ export function AssistantChat({ name }: { name: string }) {
     const content = text.trim();
     if (!content || busy) return;
     const history = messages;
-    const next: Message[] = [...history, { role: "user", content }];
+    const next: Message[] = [...history, { id: crypto.randomUUID(), role: "user", content }];
     setMessages(next);
     setDraft("");
     setBusy(true);
@@ -53,7 +54,7 @@ export function AssistantChat({ name }: { name: string }) {
       const { reply, tools } = await api<{ reply: string; tools: string[] }>("/api/admin/assistant", {
         body: { messages: next.map(({ role, content }) => ({ role, content })) },
       });
-      setMessages([...next, { role: "assistant", content: reply, tools }]);
+      setMessages([...next, { id: crypto.randomUUID(), role: "assistant", content: reply, tools }]);
     } catch (err) {
       toast.error((err as Error).message);
       // Put the question back so it can be sent again.
@@ -103,7 +104,7 @@ export function AssistantChat({ name }: { name: string }) {
               </div>
             </div>
           ) : (
-            messages.map((m, i) => <Bubble key={i} message={m} />)
+            messages.map((m) => <Bubble key={m.id} message={m} />)
           )}
           {busy && (
             <div className="flex animate-rise items-center gap-2 text-sm font-bold text-navy-soft" role="status">
@@ -157,7 +158,11 @@ function Bubble({ message }: { message: Message }) {
           mine ? "rounded-br-lg bg-navy text-cream" : "rounded-bl-lg border-2 border-navy/15 bg-cream",
         )}
       >
-        {mine ? <p className="font-semibold whitespace-pre-wrap">{message.content}</p> : <Markdown text={message.content} />}
+        {mine ? (
+          <p className="font-semibold whitespace-pre-wrap">{message.content}</p>
+        ) : (
+          <Markdown text={message.content} />
+        )}
         {checked && checked.length > 0 && (
           <p className="mt-2 text-xs font-bold text-navy-soft">Checked: {checked.join(", ")}</p>
         )}
@@ -169,31 +174,31 @@ function Bubble({ message }: { message: Message }) {
 /**
  * Just enough Markdown for the assistant's replies (the prompt asks for no tables/code):
  * headings, bullet and numbered lists, paragraphs, **bold**, *italic*, `code` and links.
- * Builds React elements, never HTML strings.
+ * Builds React elements, never HTML strings. Keys are source line numbers / character offsets.
  */
 function Markdown({ text }: { text: string }) {
   const blocks: ReactNode[] = [];
-  let list: { ordered: boolean; items: string[] } | null = null;
-  let paragraph: string[] = [];
+  let list: { ordered: boolean; start: number; items: { line: number; text: string }[] } | null = null;
+  let paragraph: { start: number; lines: string[] } | null = null;
 
   const flushParagraph = () => {
-    if (paragraph.length) blocks.push(<p key={blocks.length}>{inline(paragraph.join(" "))}</p>);
-    paragraph = [];
+    if (paragraph) blocks.push(<p key={paragraph.start}>{inline(paragraph.lines.join(" "))}</p>);
+    paragraph = null;
   };
   const flushList = () => {
     if (!list) return;
     const Tag = list.ordered ? "ol" : "ul";
     blocks.push(
-      <Tag key={blocks.length} className={cn("space-y-1 pl-5", list.ordered ? "list-decimal" : "list-disc")}>
-        {list.items.map((item, i) => (
-          <li key={i}>{inline(item)}</li>
+      <Tag key={list.start} className={cn("space-y-1 pl-5", list.ordered ? "list-decimal" : "list-disc")}>
+        {list.items.map((item) => (
+          <li key={item.line}>{inline(item.text)}</li>
         ))}
       </Tag>,
     );
     list = null;
   };
 
-  for (const raw of text.split("\n")) {
+  for (const [lineNo, raw] of text.split("\n").entries()) {
     const line = raw.trim();
     const heading = line.match(/^#{1,4}\s+(.*)$/);
     const bullet = line.match(/^[-*•]\s+(.*)$/);
@@ -207,7 +212,7 @@ function Markdown({ text }: { text: string }) {
       flushParagraph();
       flushList();
       blocks.push(
-        <p key={blocks.length} className="font-display text-lg font-extrabold">
+        <p key={lineNo} className="font-display text-lg font-extrabold">
           {inline(heading[1] ?? "")}
         </p>,
       );
@@ -215,11 +220,12 @@ function Markdown({ text }: { text: string }) {
       flushParagraph();
       const ordered = Boolean(numbered);
       if (list && list.ordered !== ordered) flushList();
-      list ??= { ordered, items: [] };
-      list.items.push((bullet ?? numbered)?.[1] ?? "");
+      list ??= { ordered, start: lineNo, items: [] };
+      list.items.push({ line: lineNo, text: (bullet ?? numbered)?.[1] ?? "" });
     } else {
       flushList();
-      paragraph.push(line);
+      paragraph ??= { start: lineNo, lines: [] };
+      paragraph.lines.push(line);
     }
   }
   flushParagraph();
@@ -230,25 +236,40 @@ function Markdown({ text }: { text: string }) {
 
 const INLINE = /(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|`[^`]+`|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g;
 
-function inline(text: string): ReactNode {
-  return text.split(INLINE).map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
-    if (part.startsWith("`") && part.endsWith("`")) {
-      return (
-        <code key={i} className="rounded bg-navy/10 px-1 text-[0.9em]">
-          {part.slice(1, -1)}
-        </code>
-      );
-    }
-    const link = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
-    if (link) {
-      return (
-        <a key={i} href={link[2]} target="_blank" rel="noopener noreferrer" className="font-bold underline underline-offset-2">
-          {link[1]}
-        </a>
-      );
-    }
-    if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
-    return <Fragment key={i}>{part}</Fragment>;
-  });
+function inline(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  let offset = 0;
+  for (const part of text.split(INLINE)) {
+    const key = offset;
+    offset += part.length;
+    if (part) nodes.push(inlinePart(part, key));
+  }
+  return nodes;
+}
+
+function inlinePart(part: string, key: number): ReactNode {
+  if (part.startsWith("**") && part.endsWith("**")) return <strong key={key}>{part.slice(2, -2)}</strong>;
+  if (part.startsWith("`") && part.endsWith("`")) {
+    return (
+      <code key={key} className="rounded bg-navy/10 px-1 text-[0.9em]">
+        {part.slice(1, -1)}
+      </code>
+    );
+  }
+  const link = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
+  if (link) {
+    return (
+      <a
+        key={key}
+        href={link[2]}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-bold underline underline-offset-2"
+      >
+        {link[1]}
+      </a>
+    );
+  }
+  if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) return <em key={key}>{part.slice(1, -1)}</em>;
+  return <Fragment key={key}>{part}</Fragment>;
 }

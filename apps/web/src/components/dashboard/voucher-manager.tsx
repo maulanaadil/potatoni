@@ -7,9 +7,10 @@ import { toast } from "sonner";
 import useSWR from "swr";
 import { EmptyState, Panel } from "@/components/ui/brand";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog } from "@/components/ui/dialog";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/field";
-import { DatePicker } from "@/components/ui/date-picker";
+import { MoneyInput } from "@/components/ui/money-input";
 import { api } from "@/lib/client";
 import { cn } from "@/lib/cn";
 import { formatDay, formatRupiah } from "@/lib/format";
@@ -136,13 +137,15 @@ export function VoucherManager({ campaigns: initial, baseUrl }: { campaigns: Cam
 
       {isLocal && campaigns.length > 0 && (
         <Panel className="mb-4 border-dashed bg-sun/30 p-3 text-sm font-semibold">
-          These QR codes point to <code>{baseUrl}</code>. Set <code>APP_URL</code> to your live domain before printing them.
+          These QR codes point to <code>{baseUrl}</code>. Set <code>APP_URL</code> to your live domain before printing
+          them.
         </Panel>
       )}
 
       {campaigns.length === 0 ? (
         <EmptyState title="No vouchers yet">
-          Create one (e.g. “20% off your first order”), print the QR code at the stall, and watch the customer list grow.
+          Create one (e.g. “20% off your first order”), print the QR code at the stall, and watch the customer list
+          grow.
         </EmptyState>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -204,30 +207,36 @@ export function VoucherManager({ campaigns: initial, baseUrl }: { campaigns: Cam
               </div>
             </div>
             <Field label={draft.discountType === "PERCENT" ? "Percent off" : "Rupiah off"}>
-              <Input
-                inputMode="numeric"
-                value={draft.discountValue}
-                onChange={(e) => setDraft({ ...draft, discountValue: digits(e.target.value) })}
-                placeholder={draft.discountType === "PERCENT" ? "20" : "5000"}
-              />
-            </Field>
-            {draft.discountType === "PERCENT" ? (
-              <Field label="Max discount (Rp, optional)">
+              {draft.discountType === "PERCENT" ? (
                 <Input
                   inputMode="numeric"
+                  value={draft.discountValue}
+                  onChange={(e) => setDraft({ ...draft, discountValue: digits(e.target.value).slice(0, 3) })}
+                  placeholder="20"
+                />
+              ) : (
+                <MoneyInput
+                  value={draft.discountValue}
+                  onValueChange={(discountValue) => setDraft({ ...draft, discountValue })}
+                  placeholder="5.000"
+                />
+              )}
+            </Field>
+            {draft.discountType === "PERCENT" ? (
+              <Field label="Max discount (optional)">
+                <MoneyInput
                   value={draft.maxDiscount}
-                  onChange={(e) => setDraft({ ...draft, maxDiscount: digits(e.target.value) })}
-                  placeholder="10000"
+                  onValueChange={(maxDiscount) => setDraft({ ...draft, maxDiscount })}
+                  placeholder="10.000"
                 />
               </Field>
             ) : (
               <span className="hidden sm:block" />
             )}
-            <Field label="Minimum spend (Rp)">
-              <Input
-                inputMode="numeric"
+            <Field label="Minimum spend">
+              <MoneyInput
                 value={draft.minSpend}
-                onChange={(e) => setDraft({ ...draft, minSpend: digits(e.target.value) })}
+                onValueChange={(minSpend) => setDraft({ ...draft, minSpend })}
                 placeholder="0"
               />
             </Field>
@@ -239,10 +248,21 @@ export function VoucherManager({ campaigns: initial, baseUrl }: { campaigns: Cam
               />
             </Field>
             <Field label="Claiming starts">
-              <DatePicker clearable placeholder="Right away" value={draft.claimStartsAt} onChange={(v) => setDraft({ ...draft, claimStartsAt: v })} />
+              <DatePicker
+                clearable
+                placeholder="Right away"
+                value={draft.claimStartsAt}
+                onChange={(v) => setDraft({ ...draft, claimStartsAt: v })}
+              />
             </Field>
             <Field label="Claiming ends" hint="Leave empty to keep it open.">
-              <DatePicker clearable placeholder="No end date" min={draft.claimStartsAt} value={draft.claimEndsAt} onChange={(v) => setDraft({ ...draft, claimEndsAt: v })} />
+              <DatePicker
+                clearable
+                placeholder="No end date"
+                min={draft.claimStartsAt}
+                value={draft.claimEndsAt}
+                onChange={(v) => setDraft({ ...draft, claimEndsAt: v })}
+              />
             </Field>
             <Field label="How many vouchers (optional)" hint="Stops claims when this many are issued.">
               <Input
@@ -283,7 +303,15 @@ function CampaignCard({ campaign: c, url, onEdit }: { campaign: CampaignSummary;
     <Panel className="flex flex-col gap-4 p-4 sm:flex-row">
       <div className="flex shrink-0 flex-col items-center gap-2">
         <div className="rounded-2xl border-2 border-navy bg-white p-2">
-          <QRCodeCanvas ref={canvas} value={url} size={512} level="M" marginSize={2} fgColor="#2a2670" className="size-32" />
+          <QRCodeCanvas
+            ref={canvas}
+            value={url}
+            size={512}
+            level="M"
+            marginSize={2}
+            fgColor="#2a2670"
+            className="size-32"
+          />
         </div>
         <p className="font-mono text-xs text-navy-soft">/v/{c.slug}</p>
       </div>
@@ -301,7 +329,12 @@ function CampaignCard({ campaign: c, url, onEdit }: { campaign: CampaignSummary;
               {c.quota != null && ` · ${c.quota} vouchers`}
             </p>
           </div>
-          <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs font-extrabold uppercase", STATE[c.state].className)}>
+          <span
+            className={cn(
+              "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-extrabold uppercase",
+              STATE[c.state].className,
+            )}
+          >
             {STATE[c.state].label}
           </span>
         </div>
@@ -312,13 +345,20 @@ function CampaignCard({ campaign: c, url, onEdit }: { campaign: CampaignSummary;
           <Stat label="Discount" value={formatRupiah(c.stats.discountGiven)} />
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" intent="outline" onClick={() => navigator.clipboard.writeText(url).then(() => toast.success("Link copied"))}>
+          <Button
+            size="sm"
+            intent="outline"
+            onClick={() => navigator.clipboard.writeText(url).then(() => toast.success("Link copied"))}
+          >
             Copy link
           </Button>
           <Button size="sm" intent="outline" onClick={downloadQr}>
             Download QR
           </Button>
-          <Link href={`/dashboard/vouchers/${c.id}/poster`} className={buttonVariants({ intent: "outline", size: "sm" })}>
+          <Link
+            href={`/dashboard/vouchers/${c.id}/poster`}
+            className={buttonVariants({ intent: "outline", size: "sm" })}
+          >
             Print poster
           </Link>
           <Button size="sm" intent="ghost" onClick={onEdit}>

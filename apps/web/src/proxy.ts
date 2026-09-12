@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, verifySession } from "@/lib/session";
 
 // Page-level gate. API routes check the JWT themselves and answer with JSON 401s.
@@ -29,6 +29,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   // Metadata files (manifest, robots, icons, share images) must load without a session.
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|robots.txt|icons/|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|robots.txt|icons/|wasm/|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt)$).*)",
   ],
 };

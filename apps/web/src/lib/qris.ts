@@ -64,6 +64,6 @@ export function toDynamicQris(amount: number, payload = STATIC_QRIS_PAYLOAD) {
   if (insertAt === -1) fields.push(amountField);
   else fields.splice(insertAt, 0, amountField);
 
-  const body = fields.map(encodeTlv).join("") + "6304";
+  const body = `${fields.map(encodeTlv).join("")}6304`;
   return body + crc16(body);
 }
