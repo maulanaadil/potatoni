@@ -21,10 +21,12 @@ export type CartLine = {
 type CartState = {
   lines: CartLine[];
   customerName: string;
+  voucherCode: string | null;
   add: (line: Omit<CartLine, "key">) => void;
   setQuantity: (key: string, quantity: number) => void;
   remove: (key: string) => void;
   setCustomerName: (name: string) => void;
+  setVoucherCode: (code: string | null) => void;
   clear: () => void;
   restore: (lines: CartLine[], customerName: string) => void;
 };
@@ -37,6 +39,7 @@ export const useCart = create<CartState>()(
     (set) => ({
       lines: [],
       customerName: "",
+      voucherCode: null,
       add: (line) =>
         set((state) => {
           const key = lineKey(line.variantId, line.modifiers);
@@ -59,7 +62,8 @@ export const useCart = create<CartState>()(
         })),
       remove: (key) => set((state) => ({ lines: state.lines.filter((l) => l.key !== key) })),
       setCustomerName: (customerName) => set({ customerName }),
-      clear: () => set({ lines: [], customerName: "" }),
+      setVoucherCode: (voucherCode) => set({ voucherCode: voucherCode?.trim().toUpperCase() || null }),
+      clear: () => set({ lines: [], customerName: "", voucherCode: null }),
       restore: (lines, customerName) => set({ lines, customerName }),
     }),
     { name: "potatoni-cart" },

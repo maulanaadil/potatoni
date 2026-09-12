@@ -246,6 +246,12 @@ export function OrdersTable({
                 </li>
               ))}
             </ul>
+            {selected.discount > 0 && (
+              <p className="flex justify-between text-sm font-bold text-leaf">
+                <span>🎟️ {selected.voucherClaim?.code} · {selected.voucherClaim?.campaign.name}</span>
+                <span className="tabular-nums">−{formatRupiah(selected.discount)}</span>
+              </p>
+            )}
             <div className="flex justify-between border-t-2 border-dotted border-navy/20 pt-3 font-display text-xl font-extrabold">
               <span>Total</span>
               <span className="tabular-nums">{formatRupiah(selected.total)}</span>

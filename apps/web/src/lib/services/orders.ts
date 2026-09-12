@@ -5,12 +5,14 @@ import { HttpError } from "../api";
 import { db } from "../db";
 import { formatRupiah, jakartaDateKey, startOfJakartaDay } from "../format";
 import { resolveLocationId } from "./locations";
+import { evaluateVoucher } from "./vouchers";
 import type { Session } from "../session";
 import { MAX_SEASONINGS, type CreateOrderInput } from "../validators";
 
 export const orderInclude = {
   items: { orderBy: { id: "asc" } },
   location: { select: { id: true, name: true } },
+  voucherClaim: { select: { code: true, campaign: { select: { name: true } } } },
 } satisfies Prisma.OrderInclude;
 export type OrderWithItems = Prisma.OrderGetPayload<{ include: typeof orderInclude }>;
 
@@ -83,12 +85,18 @@ export async function createOrder(input: CreateOrderInput, session: Session) {
     try {
       return await db.$transaction(async (tx) => {
         const code = await nextOrderCode(tx);
+        // Checked inside the transaction; Order.voucherClaimId is unique, so two tills
+        // can't spend the same voucher at once.
+        const voucher = input.voucherCode ? await evaluateVoucher(input.voucherCode, subtotal, tx) : null;
+        const discount = voucher?.discount ?? 0;
         const order = await tx.order.create({
           data: {
             code,
             paymentMethod: input.paymentMethod,
             subtotal,
-            total: subtotal,
+            discount,
+            total: subtotal - discount,
+            voucherClaimId: voucher?.claimId,
             customerName: input.customerName,
             note: input.note,
             locationId,
@@ -99,12 +107,12 @@ export async function createOrder(input: CreateOrderInput, session: Session) {
         await logActivity(
           {
             action: "order.created",
-            message: `${session.name} created order ${code}${order.location ? ` at ${order.location.name}` : ""} (${formatRupiah(order.total)})`,
+            message: `${session.name} created order ${code}${order.location ? ` at ${order.location.name}` : ""} (${formatRupiah(order.total)}${voucher ? `, voucher ${voucher.code} −${formatRupiah(discount)}` : ""})`,
             source: "POS",
             session,
             entityType: "order",
             entityId: order.id,
-            meta: { total: order.total, items: items.length, paymentMethod: input.paymentMethod, locationId },
+            meta: { total: order.total, discount, items: items.length, paymentMethod: input.paymentMethod, locationId, voucher: voucher?.code },
           },
           tx,
         );
@@ -144,6 +152,9 @@ export async function payOrder(
       },
       include: orderInclude,
     });
+    if (order.voucherClaimId) {
+      await tx.voucherClaim.update({ where: { id: order.voucherClaimId }, data: { status: "REDEEMED", redeemedAt: new Date() } });
+    }
     await logActivity(
       {
         action: "order.paid",
@@ -169,9 +180,13 @@ export async function cancelOrder(id: string, session: Session, source: "POS" | 
     }
     const updated = await tx.order.update({
       where: { id },
-      data: { status: "CANCELLED", cancelledAt: new Date() },
+      // Cancelling gives the voucher back to the customer.
+      data: { status: "CANCELLED", cancelledAt: new Date(), voucherClaimId: null },
       include: orderInclude,
     });
+    if (order.voucherClaimId) {
+      await tx.voucherClaim.update({ where: { id: order.voucherClaimId }, data: { status: "ISSUED", redeemedAt: null } });
+    }
     await logActivity(
       {
         action: "order.cancelled",

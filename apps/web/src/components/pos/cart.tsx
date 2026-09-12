@@ -14,6 +14,7 @@ import { formatRupiah } from "@/lib/format";
 import type { OrderView } from "@/lib/views";
 import { useCurrentLocation } from "./location-context";
 import { PaymentDialog } from "./payment-dialog";
+import { useVoucherPreview, VoucherField } from "./voucher-field";
 import { QuantityStepper } from "./quantity-stepper";
 
 const rupiahFormat = { style: "currency", currency: "IDR", maximumFractionDigits: 0 } as const;
@@ -42,7 +43,10 @@ export function CartPanel({ className }: { className?: string }) {
   const [order, setOrder] = useState<OrderView | null>(null);
 
   const visibleLines = hydrated ? lines : [];
-  const total = cartTotal(visibleLines);
+  const subtotal = cartTotal(visibleLines);
+  const voucher = useVoucherPreview(hydrated ? subtotal : 0);
+  const discount = voucher.voucher?.discount ?? 0;
+  const total = subtotal - discount;
 
   async function checkout() {
     setSubmitting(true);
@@ -52,6 +56,7 @@ export function CartPanel({ className }: { className?: string }) {
           paymentMethod,
           // Send what the location bar shows, so the cashier always sees where the sale lands.
           locationId,
+          voucherCode: voucher.code ?? undefined,
           customerName: customerName || undefined,
           items: lines.map((l) => ({
             variantId: l.variantId,
@@ -127,6 +132,7 @@ export function CartPanel({ className }: { className?: string }) {
           onChange={(e) => setCustomerName(e.target.value)}
           maxLength={60}
         />
+        <VoucherField preview={voucher} />
         <div className="grid grid-cols-2 gap-1 rounded-2xl border-2 border-navy bg-paper p-1" role="radiogroup">
           {(["QRIS", "CASH"] as const).map((method) => (
             <button
@@ -144,6 +150,12 @@ export function CartPanel({ className }: { className?: string }) {
             </button>
           ))}
         </div>
+        {discount > 0 && (
+          <div className="flex flex-col gap-0.5 text-sm font-bold">
+            <p className="flex justify-between"><span>Subtotal</span><span className="tabular-nums">{formatRupiah(subtotal)}</span></p>
+            <p className="flex justify-between text-leaf"><span>Voucher</span><span className="tabular-nums">−{formatRupiah(discount)}</span></p>
+          </div>
+        )}
         <div className="flex items-baseline justify-between">
           <span className="font-display text-lg font-bold">Total</span>
           <NumberFlow
@@ -157,7 +169,8 @@ export function CartPanel({ className }: { className?: string }) {
         <Button
           intent="sun"
           size="lg"
-          disabled={visibleLines.length === 0 || submitting}
+          // A voucher that doesn't apply must be removed first, so nobody is charged by surprise.
+          disabled={visibleLines.length === 0 || submitting || Boolean(voucher.error) || voucher.checking}
           onClick={checkout}
         >
           {submitting ? "Creating order…" : `Charge ${formatRupiah(total)}`}

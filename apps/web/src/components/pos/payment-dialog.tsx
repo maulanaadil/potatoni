@@ -246,6 +246,12 @@ export function PaymentDialog({
                 </li>
               ))}
             </ul>
+            {shown.discount > 0 && (
+              <p className="flex justify-between gap-2 border-t-2 border-dotted border-navy/15 pt-1 pb-1 text-sm font-bold text-leaf">
+                <span>Voucher {shown.voucherClaim?.code}</span>
+                <span className="tabular-nums">−{formatRupiah(shown.discount)}</span>
+              </p>
+            )}
           </details>
         </div>
       ) : null}

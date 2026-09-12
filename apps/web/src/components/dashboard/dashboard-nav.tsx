@@ -13,6 +13,8 @@ const LINKS = [
   { href: "/dashboard/products", label: "Products", icon: "🍟" },
   { href: "/dashboard/modifiers", label: "Seasonings & add-ons", icon: "🧂" },
   { href: "/dashboard/locations", label: "Locations", icon: "📍" },
+  { href: "/dashboard/vouchers", label: "Vouchers", icon: "🎟️" },
+  { href: "/dashboard/customers", label: "Customers", icon: "💌" },
   { href: "/dashboard/purchases", label: "Purchases", icon: "🛒" },
   { href: "/dashboard/activity", label: "Activity", icon: "⚡" },
   { href: "/dashboard/users", label: "Team", icon: "👥" },
@@ -38,7 +40,7 @@ export function DashboardNav({ name }: { name: string }) {
   return (
     <>
       {/* Laptop: sidebar */}
-      <aside className="sticky top-0 hidden h-dvh flex-col gap-6 border-r-2 border-navy bg-paper px-4 py-5 lg:flex">
+      <aside className="sticky top-0 hidden h-dvh print:hidden flex-col gap-6 border-r-2 border-navy bg-paper px-4 py-5 lg:flex">
         <Link href="/dashboard">
           <Logo priority className="h-auto w-full" />
         </Link>
@@ -64,7 +66,7 @@ export function DashboardNav({ name }: { name: string }) {
       </aside>
 
       {/* Phone & tablet: top bar with scrollable tabs */}
-      <header className="sticky top-0 z-30 border-b-2 border-navy bg-cream/90 pt-[env(safe-area-inset-top)] backdrop-blur-md lg:hidden">
+      <header className="sticky top-0 z-30 border-b-2 border-navy bg-cream/90 pt-[env(safe-area-inset-top)] backdrop-blur-md lg:hidden print:hidden">
         <div className="flex items-center gap-3 px-4 py-2">
           <Link href="/dashboard" className="shrink-0">
             <Logo priority className="h-10 w-auto" />

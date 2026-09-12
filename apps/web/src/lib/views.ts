@@ -15,6 +15,8 @@ export type OrderView = {
   paidAt: string | null;
   cancelledAt: string | null;
   location: { id: string; name: string } | null;
+  discount: number;
+  voucherClaim: { code: string | null; campaign: { name: string } } | null;
   items: {
     id: string;
     productName: string;

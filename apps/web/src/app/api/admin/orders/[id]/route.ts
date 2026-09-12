@@ -39,6 +39,9 @@ export const DELETE = handler(async (_request, { params }: Ctx) => {
   const session = await requireApiSession("ADMIN");
   const { id } = await params;
   const order = await db.order.delete({ where: { id } });
+  if (order.voucherClaimId) {
+    await db.voucherClaim.update({ where: { id: order.voucherClaimId }, data: { status: "ISSUED", redeemedAt: null } });
+  }
   await logActivity({
     action: "order.deleted",
     message: `${session.name} permanently deleted order ${order.code}`,

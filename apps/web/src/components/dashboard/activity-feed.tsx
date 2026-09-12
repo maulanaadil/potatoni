@@ -12,7 +12,7 @@ export type ActivityView = {
   id: string;
   action: string;
   message: string;
-  source: "POS" | "DASHBOARD";
+  source: "POS" | "DASHBOARD" | "PUBLIC";
   createdAt: string;
   actor: { name: string; role: string } | null;
 };
@@ -24,6 +24,9 @@ const ACTION_ICON: Record<string, string> = {
   purchase: "🛒",
   product: "🍟",
   location: "📍",
+  voucher: "🎟️",
+  invite: "✉️",
+  customer: "💌",
   modifier: "🧂",
   user: "👤",
   auth: "🔑",
@@ -42,6 +45,8 @@ const ACTIONS = [
   { value: "product.", label: "Products" },
   { value: "modifier.", label: "Add-ons" },
   { value: "location.", label: "Locations" },
+  { value: "voucher.", label: "Vouchers" },
+  { value: "invite.", label: "Invites" },
   { value: "auth.", label: "Sign-ins" },
 ];
 
@@ -120,10 +125,10 @@ export function ActivityFeed({ initial, initialCursor }: { initial: ActivityView
               <span
                 className={cn(
                   "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-extrabold uppercase",
-                  a.source === "POS" ? "bg-sun text-navy" : "bg-navy text-cream",
+                  a.source === "POS" ? "bg-sun text-navy" : a.source === "PUBLIC" ? "bg-leaf text-paper" : "bg-navy text-cream",
                 )}
               >
-                {a.source === "POS" ? "Register" : "Dashboard"}
+                {a.source === "POS" ? "Register" : a.source === "PUBLIC" ? "Customer" : "Dashboard"}
               </span>
             </div>
           ))}

@@ -103,6 +103,12 @@ export function OrdersBoard({ initialOrders }: { initialOrders: OrderView[] }) {
                   </li>
                 ))}
               </ul>
+              {order.discount > 0 && (
+                <p className="flex justify-between text-sm font-bold text-leaf">
+                  <span>🎟️ {order.voucherClaim?.code ?? "Voucher"}</span>
+                  <span className="tabular-nums">−{formatRupiah(order.discount)}</span>
+                </p>
+              )}
               <div className="mt-auto flex items-center justify-between border-t-2 border-dotted border-navy/15 pt-3">
                 <span className="font-display text-xl font-extrabold tabular-nums">{formatRupiah(order.total)}</span>
                 {order.status === "PENDING" && (
