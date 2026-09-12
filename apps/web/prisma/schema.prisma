@@ -37,6 +37,18 @@ enum PaymentMethod {
 enum ActivitySource {
   POS
   DASHBOARD
+  PUBLIC // customers on the voucher claim page
+}
+
+enum DiscountType {
+  PERCENT
+  AMOUNT
+}
+
+enum ClaimStatus {
+  PENDING // waiting for the email code
+  ISSUED // verified, voucher can be used
+  REDEEMED // used on a paid order
 }
 
 model User {
@@ -44,8 +56,10 @@ model User {
   name         String
   email        String     @unique
   passwordHash String
-  role         Role       @default(ADMIN)
-  activities   Activity[]
+  role            Role       @default(ADMIN)
+  emailVerifiedAt DateTime?
+  activities      Activity[]
+  invitesSent     Invite[]   @relation("InvitesSent")
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
@@ -104,6 +118,9 @@ model Order {
   items         OrderItem[]
   locationId    String?
   location      Location?     @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  discount       Int           @default(0)
+  voucherClaimId String?       @unique
+  voucherClaim   VoucherClaim? @relation(fields: [voucherClaimId], references: [id], onDelete: SetNull)
   createdAt     DateTime      @default(now())
   paidAt        DateTime?
   cancelledAt   DateTime?
@@ -177,4 +194,82 @@ model Location {
   updatedAt DateTime   @updatedAt
 
   @@index([startsOn])
+}
+
+// Team invitations: the link in the email is the proof that the address works.
+model Invite {
+  id          String    @id @default(cuid())
+  email       String
+  name        String?
+  role        Role      @default(CASHIER)
+  tokenHash   String    @unique // sha256 of the emailed token; the token itself is never stored
+  invitedById String?
+  invitedBy   User?     @relation("InvitesSent", fields: [invitedById], references: [id], onDelete: SetNull)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  lastSentAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@index([email])
+}
+
+// People who claimed a voucher — the owner's marketing list (only blast those who consented).
+model Customer {
+  id               String         @id @default(cuid())
+  name             String
+  email            String         @unique
+  phone            String // +62… (WhatsApp)
+  emailVerifiedAt  DateTime?
+  marketingConsent Boolean        @default(false)
+  consentAt        DateTime?
+  claims           VoucherClaim[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([phone])
+}
+
+model VoucherCampaign {
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique // public claim link /v/<slug>, printed as a QR code
+  description   String?
+  discountType  DiscountType
+  discountValue Int // percent (1–100) or rupiah
+  maxDiscount   Int? // cap for percent vouchers
+  minSpend      Int            @default(0)
+  claimStartsAt DateTime?      @db.Date
+  claimEndsAt   DateTime?      @db.Date
+  validDays     Int            @default(30) // how long a voucher works after it's issued
+  quota         Int? // max vouchers issued
+  isActive      Boolean        @default(true)
+  claims        VoucherClaim[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model VoucherClaim {
+  id            String          @id @default(cuid())
+  campaignId    String
+  campaign      VoucherCampaign @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  customerId    String
+  customer      Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  phone         String // one voucher per phone per campaign, too
+  status        ClaimStatus     @default(PENDING)
+  otpHash       String?
+  otpExpiresAt  DateTime?
+  otpAttempts   Int             @default(0)
+  otpSentCount  Int             @default(0)
+  otpLastSentAt DateTime?
+  code          String?         @unique // e.g. PTN-7KQ2XM, shown to the cashier
+  issuedAt      DateTime?
+  expiresAt     DateTime?
+  redeemedAt    DateTime?
+  order         Order? // set while a pending order holds the voucher, and after redemption
+  createdAt     DateTime        @default(now())
+
+  @@unique([campaignId, customerId])
+  @@unique([campaignId, phone])
+  @@index([status])
 }

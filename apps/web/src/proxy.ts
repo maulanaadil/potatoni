@@ -6,6 +6,9 @@ export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value);
 
+  // Public: voucher claim pages (customers) and team invite links (not signed in yet).
+  if (pathname.startsWith("/v/") || pathname.startsWith("/invite/")) return NextResponse.next();
+
   if (pathname === "/login") {
     return session ? NextResponse.redirect(new URL("/", request.url)) : NextResponse.next();
   }

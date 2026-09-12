@@ -8,3 +8,4 @@ allowBuilds:
   sharp: true
 minimumReleaseAgeExclude:
   - '@aws-sdk/client-s3@3.1131.0'
+  - nodemailer@10.0.8

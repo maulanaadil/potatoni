@@ -7,7 +7,7 @@ type LogInput = {
   action: string;
   message: string;
   session: Session | null;
-  source: "POS" | "DASHBOARD";
+  source: "POS" | "DASHBOARD" | "PUBLIC";
   entityType?: string;
   entityId?: string;
   meta?: Prisma.InputJsonValue;
