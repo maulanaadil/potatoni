@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Baloo_2, Nunito } from "next/font/google";
 import { Toaster } from "sonner";
+import { LaunchSplash } from "@/components/launch-splash";
 import { Providers } from "@/components/providers";
 import { OfflineBanner, ServiceWorker } from "@/components/pwa";
+import { appleStartupImages } from "@/lib/splash-screens";
 import "./globals.css";
 
 const baloo = Baloo_2({
@@ -24,7 +26,7 @@ export const metadata: Metadata = {
   keywords: ["Potatoni", "fries", "pom-pom", "chicken bites", "Bandung", "POS"],
   // Private app behind a login (see robots.ts). Flip to index: true for a public landing page.
   robots: { index: false, follow: false },
-  appleWebApp: { capable: true, title: "Potatoni", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Potatoni", statusBarStyle: "default", startupImage: appleStartupImages },
   formatDetection: { telephone: false, email: false, address: false },
   openGraph: {
     type: "website",
@@ -51,6 +53,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={`${baloo.variable} ${nunito.variable}`}>
       <body className="min-h-dvh bg-cream font-sans text-navy antialiased selection:bg-sun">
+        <LaunchSplash />
         <Providers>{children}</Providers>
         <OfflineBanner />
         <ServiceWorker />

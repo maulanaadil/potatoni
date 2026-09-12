@@ -15,7 +15,8 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "assets:upload": "tsx scripts/upload-assets.ts",
-    "assets:brand": "tsx scripts/generate-brand-assets.ts"
+    "assets:brand": "tsx scripts/generate-brand-assets.ts",
+    "assets:splash": "tsx scripts/generate-splash-screens.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1131.0",
