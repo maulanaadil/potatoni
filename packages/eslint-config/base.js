@@ -1,17 +1,12 @@
 import babelParser from "@babel/eslint-parser";
-import js from "@eslint/js";
-import eslintConfigPrettier from "eslint-config-prettier";
-import turboPlugin from "eslint-plugin-turbo";
-import onlyWarn from "eslint-plugin-only-warn";
 
 /**
- * A shared ESLint configuration for the repository.
+ * ESLint only runs the rules Biome doesn't have (React Compiler and Next.js checks).
+ * Formatting, imports and general linting live in the root biome.json.
  *
  * @type {import("eslint").Linter.Config[]}
  * */
 export const config = [
-  js.configs.recommended,
-  eslintConfigPrettier,
   {
     languageOptions: {
       parser: babelParser,
@@ -21,17 +16,6 @@ export const config = [
           presets: ["@babel/preset-typescript"],
         },
       },
-    },
-    plugins: {
-      turbo: turboPlugin,
-    },
-    rules: {
-      "turbo/no-undeclared-env-vars": "warn",
-    },
-  },
-  {
-    plugins: {
-      onlyWarn,
     },
   },
   {

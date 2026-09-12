@@ -1,11 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { useCart } from "@/lib/cart";
+import { cn } from "@/lib/cn";
 import { formatK, formatRupiah, mediaUrl } from "@/lib/format";
 import type { MenuModifier, MenuProduct } from "@/lib/services/menu";
 import { MAX_SEASONINGS } from "@/lib/validators";
@@ -45,10 +45,7 @@ export function ProductOptionsDialog({
   }, [product, initialVariantId]);
 
   const applicable = useMemo(
-    () =>
-      shown
-        ? modifiers.filter((m) => !m.appliesTo || m.appliesTo === shown.category)
-        : [],
+    () => (shown ? modifiers.filter((m) => !m.appliesTo || m.appliesTo === shown.category) : []),
     [modifiers, shown],
   );
   const upgrades = applicable.filter((m) => m.type === "UPGRADE");
@@ -56,9 +53,7 @@ export function ProductOptionsDialog({
   const addons = applicable.filter((m) => m.type === "ADDON");
 
   const variant = shown?.variants.find((v) => v.id === variantId) ?? null;
-  const chosen = applicable.filter(
-    (m) => m.id === upgradeId || seasoningIds.includes(m.id) || addonIds.includes(m.id),
-  );
+  const chosen = applicable.filter((m) => m.id === upgradeId || seasoningIds.includes(m.id) || addonIds.includes(m.id));
   const unitPrice = (variant?.price ?? 0) + chosen.reduce((s, m) => s + m.price, 0);
 
   function toggleSeasoning(id: string) {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handler, HttpError, requireApiSession } from "@/lib/api";
+import { HttpError, handler, requireApiSession } from "@/lib/api";
 import { evaluateVoucher } from "@/lib/services/vouchers";
 
 // Register: preview a voucher's discount for the current cart (the order re-checks it).

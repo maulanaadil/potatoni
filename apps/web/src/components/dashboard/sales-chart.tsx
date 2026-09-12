@@ -43,7 +43,9 @@ export function SalesChart({ series, caption }: { series: DashboardStats["series
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <figcaption>
           <h2 className="font-display text-xl font-extrabold">Sales vs stock purchases</h2>
-          <p className="text-sm font-semibold text-navy-soft">{caption ?? `Last ${series.length} days, rupiah per day`}</p>
+          <p className="text-sm font-semibold text-navy-soft">
+            {caption ?? `Last ${series.length} days, rupiah per day`}
+          </p>
         </figcaption>
         {/* Legend: always present for 2 series; swatch carries identity, text stays ink */}
         <ul className="flex gap-4 text-sm font-bold">

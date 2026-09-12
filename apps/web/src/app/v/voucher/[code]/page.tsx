@@ -18,7 +18,11 @@ export default async function VoucherPage({ params }: { params: Promise<{ code: 
       <VoucherTicket voucher={voucher} />
       <Panel className="p-4 text-center text-sm">
         <p className="font-display text-lg font-extrabold">
-          {voucher.status === "valid" ? "Show this to the cashier" : voucher.status === "used" ? "Enjoy your fries!" : "This voucher has expired"}
+          {voucher.status === "valid"
+            ? "Show this to the cashier"
+            : voucher.status === "used"
+              ? "Enjoy your fries!"
+              : "This voucher has expired"}
         </p>
         <p className="text-navy-soft">Potatoni · Crispy outside, happy inside.</p>
       </Panel>

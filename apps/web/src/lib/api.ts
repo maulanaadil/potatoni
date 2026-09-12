@@ -1,6 +1,6 @@
 import "server-only";
 import { NextResponse } from "next/server";
-import { z } from "zod";
+import type { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { getSession } from "./auth";
 import { isDroppedConnection } from "./db";
@@ -54,10 +54,7 @@ export function handler<Ctx>(fn: (request: Request, ctx: Ctx) => Promise<Respons
       }
       if (isDroppedConnection(err)) {
         // Reads already retried once in db.ts; writes are never retried, so let the cashier retry.
-        return NextResponse.json(
-          { error: "Lost connection to the database — please try again" },
-          { status: 503 },
-        );
+        return NextResponse.json({ error: "Lost connection to the database — please try again" }, { status: 503 });
       }
       console.error(err);
       return NextResponse.json({ error: "Something went wrong on the server" }, { status: 500 });

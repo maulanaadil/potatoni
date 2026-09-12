@@ -1,4 +1,4 @@
-import type { OrderWithItems, ModifierSnapshot } from "./services/orders";
+import type { ModifierSnapshot, OrderWithItems } from "./services/orders";
 
 /** JSON-safe order shape shared by server pages, API responses and client components. */
 export type OrderView = {

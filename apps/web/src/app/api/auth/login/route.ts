@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity";
-import { handler, HttpError, parseBody } from "@/lib/api";
+import { HttpError, handler, parseBody } from "@/lib/api";
 import { db } from "@/lib/db";
 import { SESSION_COOKIE, SESSION_TTL_SECONDS, signSession } from "@/lib/session";
 import { loginInput } from "@/lib/validators";

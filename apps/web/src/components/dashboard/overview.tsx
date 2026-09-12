@@ -54,7 +54,11 @@ export function Overview({
   function choose(next: string) {
     setFilter(next);
     // Shareable URL without a server round-trip; SWR fetches the new stats.
-    window.history.replaceState(null, "", next === "all" ? "/dashboard" : `/dashboard?location=${encodeURIComponent(next)}`);
+    window.history.replaceState(
+      null,
+      "",
+      next === "all" ? "/dashboard" : `/dashboard?location=${encodeURIComponent(next)}`,
+    );
   }
 
   const chip = (active: boolean) =>
@@ -75,14 +79,28 @@ export function Overview({
       />
 
       {locations.length > 0 && (
-        <nav aria-label="Filter by location" className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-          <button type="button" aria-pressed={filter === "all"} className={chip(filter === "all")} onClick={() => choose("all")}>
+        <nav
+          aria-label="Filter by location"
+          className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0"
+        >
+          <button
+            type="button"
+            aria-pressed={filter === "all"}
+            className={chip(filter === "all")}
+            onClick={() => choose("all")}
+          >
             All locations
           </button>
           {locations.map((l) => {
             const value = l.id ?? "none";
             return (
-              <button key={value} type="button" aria-pressed={filter === value} className={chip(filter === value)} onClick={() => choose(value)}>
+              <button
+                key={value}
+                type="button"
+                aria-pressed={filter === value}
+                className={chip(filter === value)}
+                onClick={() => choose(value)}
+              >
                 <span aria-hidden className={cn("size-2 rounded-full", STATUS_DOT[l.status])} />
                 {l.name}
               </button>
@@ -92,14 +110,21 @@ export function Overview({
       )}
 
       {/* Keep the old numbers on screen while the next location loads, just dimmed. */}
-      <div className={cn("animate-rise transition-opacity duration-150 motion-reduce:animate-none", isLoading && "opacity-60")}>
+      <div
+        className={cn(
+          "animate-rise transition-opacity duration-150 motion-reduce:animate-none",
+          isLoading && "opacity-60",
+        )}
+      >
         {selected ? <LocationView stats={stats} summary={selected} /> : <AllView stats={stats} />}
 
         {!selected && locations.length > 0 && (
           <section className="mt-6">
             <div className="mb-3">
               <h2 className="font-display text-2xl font-extrabold">Sales by location</h2>
-              <p className="text-sm font-semibold text-navy-soft">All-time at each spot. Tap one to see its full breakdown.</p>
+              <p className="text-sm font-semibold text-navy-soft">
+                All-time at each spot. Tap one to see its full breakdown.
+              </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {locations.map((l) => (
@@ -111,7 +136,11 @@ export function Overview({
 
         {!selected && (
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <TopItems stats={stats} title="Best sellers" caption={`Portions sold, ${stats.range.label.toLowerCase()}`} />
+            <TopItems
+              stats={stats}
+              title="Best sellers"
+              caption={`Portions sold, ${stats.range.label.toLowerCase()}`}
+            />
             <Panel className="p-4 md:p-5">
               <div className="mb-3 flex items-baseline justify-between">
                 <h2 className="font-display text-xl font-extrabold">Latest activity</h2>
@@ -122,11 +151,15 @@ export function Overview({
               <ul className="flex flex-col divide-y-2 divide-dotted divide-navy/15">
                 {activity.activities.slice(0, 8).map((a) => (
                   <li key={a.id} className="flex gap-3 py-2 text-sm">
-                    <span className="w-12 shrink-0 font-bold text-navy-soft tabular-nums">{formatTime(a.createdAt)}</span>
+                    <span className="w-12 shrink-0 font-bold text-navy-soft tabular-nums">
+                      {formatTime(a.createdAt)}
+                    </span>
                     <span className="min-w-0">{a.message}</span>
                   </li>
                 ))}
-                {activity.activities.length === 0 && <li className="py-2 text-sm text-navy-soft">Nothing yet today.</li>}
+                {activity.activities.length === 0 && (
+                  <li className="py-2 text-sm text-navy-soft">Nothing yet today.</li>
+                )}
               </ul>
             </Panel>
           </div>
@@ -148,8 +181,8 @@ function AllView({ stats }: { stats: DashboardStats }) {
           <p className="font-display text-lg font-bold">Sales today</p>
           <p className="text-5xl leading-none font-extrabold md:text-6xl">{formatRupiah(today.sales)}</p>
           <p className="text-sm font-bold text-cream/80">
-            {formatRupiah(stats.range.sales)} over the {stats.range.label.toLowerCase()} · QRIS {formatRupiah(qris?.total ?? 0)}, cash{" "}
-            {formatRupiah(cash?.total ?? 0)}
+            {formatRupiah(stats.range.sales)} over the {stats.range.label.toLowerCase()} · QRIS{" "}
+            {formatRupiah(qris?.total ?? 0)}, cash {formatRupiah(cash?.total ?? 0)}
           </p>
         </Panel>
         <Tiles
@@ -220,10 +253,18 @@ function LocationView({ stats, summary }: { stats: DashboardStats; summary: Loca
           tiles={[
             { label: "Paid orders", value: range.orders.toLocaleString("id-ID") },
             { label: "Average order", value: formatRupiah(range.averageTicket) },
-            { label: "Per selling day", value: formatRupiah(range.salesPerDay), note: `${range.sellingDays} selling days` },
+            {
+              label: "Per selling day",
+              value: formatRupiah(range.salesPerDay),
+              note: `${range.sellingDays} selling days`,
+            },
             { label: "Stock purchases", value: formatRupiah(range.purchases) },
             { label: "Net", value: formatRupiah(range.net), tone: range.net < 0 ? "text-tomato" : undefined },
-            { label: "QRIS / Cash", value: `${formatRupiah(qris?.total ?? 0)}`, note: `Cash ${formatRupiah(cash?.total ?? 0)}` },
+            {
+              label: "QRIS / Cash",
+              value: `${formatRupiah(qris?.total ?? 0)}`,
+              note: `Cash ${formatRupiah(cash?.total ?? 0)}`,
+            },
           ]}
         />
       </div>
@@ -233,7 +274,11 @@ function LocationView({ stats, summary }: { stats: DashboardStats; summary: Loca
       </Panel>
 
       <div className="mt-4">
-        <TopItems stats={stats} title="What sold here" caption={`Every product and size, ${range.label.toLowerCase()}`} />
+        <TopItems
+          stats={stats}
+          title="What sold here"
+          caption={`Every product and size, ${range.label.toLowerCase()}`}
+        />
       </div>
     </>
   );
@@ -272,7 +317,10 @@ function TopItems({ stats, title, caption }: { stats: DashboardStats; title: str
                 </span>
               </div>
               <div className="h-2.5 rounded-full bg-chart-sales/15">
-                <div className="h-full rounded-full bg-chart-sales" style={{ width: `${(item.quantity / max) * 100}%` }} />
+                <div
+                  className="h-full rounded-full bg-chart-sales"
+                  style={{ width: `${(item.quantity / max) * 100}%` }}
+                />
               </div>
             </li>
           ))}

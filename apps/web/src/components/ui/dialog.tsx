@@ -32,7 +32,16 @@ export function Dialog(props: DialogProps) {
 }
 
 /** md+: centered, opacity + scale(0.96), 180ms in / 140ms out; reduced motion = fade only. */
-function ModalDialog({ open, onOpenChange, title, description, children, footer, className, instant = false }: DialogProps) {
+function ModalDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  footer,
+  className,
+  instant = false,
+}: DialogProps) {
   return (
     <BaseDialog.Root open={open} onOpenChange={onOpenChange}>
       <BaseDialog.Portal>
@@ -57,8 +66,12 @@ function ModalDialog({ open, onOpenChange, title, description, children, footer,
         >
           <div className="flex shrink-0 items-start justify-between gap-4 border-b-2 border-navy/10 px-5 pt-5 pb-4">
             <div>
-              <BaseDialog.Title className="font-display text-2xl leading-tight font-extrabold">{title}</BaseDialog.Title>
-              {description && <BaseDialog.Description className="mt-0.5 text-sm text-navy-soft">{description}</BaseDialog.Description>}
+              <BaseDialog.Title className="font-display text-2xl leading-tight font-extrabold">
+                {title}
+              </BaseDialog.Title>
+              {description && (
+                <BaseDialog.Description className="mt-0.5 text-sm text-navy-soft">{description}</BaseDialog.Description>
+              )}
             </div>
             <BaseDialog.Close aria-label="Close" className={closeButton}>
               ×
@@ -95,7 +108,16 @@ const sheetInstant =
 export const sheetHandle = <div aria-hidden className="mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full bg-navy/20" />;
 
 /** < md: bottom sheet with a drag handle; swipe down (or tap the backdrop / ×) to close. */
-function SheetDialog({ open, onOpenChange, title, description, children, footer, className, instant = false }: DialogProps) {
+function SheetDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  footer,
+  className,
+  instant = false,
+}: DialogProps) {
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.VirtualKeyboardProvider>
@@ -108,13 +130,17 @@ function SheetDialog({ open, onOpenChange, title, description, children, footer,
               <div className="flex shrink-0 touch-none items-start justify-between gap-4 border-b-2 border-navy/10 px-5 pt-3 pb-4 select-none">
                 <div>
                   <Drawer.Title className="font-display text-2xl leading-tight font-extrabold">{title}</Drawer.Title>
-                  {description && <Drawer.Description className="mt-0.5 text-sm text-navy-soft">{description}</Drawer.Description>}
+                  {description && (
+                    <Drawer.Description className="mt-0.5 text-sm text-navy-soft">{description}</Drawer.Description>
+                  )}
                 </div>
                 <Drawer.Close aria-label="Close" className={closeButton}>
                   ×
                 </Drawer.Close>
               </div>
-              <Drawer.Content className="min-h-0 flex-1 overflow-y-auto overscroll-contain touch-auto px-5 py-4">{children}</Drawer.Content>
+              <Drawer.Content className="min-h-0 flex-1 overflow-y-auto overscroll-contain touch-auto px-5 py-4">
+                {children}
+              </Drawer.Content>
               {footer ? (
                 <div className="shrink-0 border-t-2 border-navy/10 bg-cream/60 px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                   {footer}

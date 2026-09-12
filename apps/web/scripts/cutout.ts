@@ -23,8 +23,7 @@ export async function cutout(input: Buffer) {
     const values = border.map((i) => data[i + c]!).sort((a, b) => a - b);
     return values[Math.floor(values.length / 2)]!;
   });
-  const dist = (i: number) =>
-    Math.hypot(data[i]! - bg[0]!, data[i + 1]! - bg[1]!, data[i + 2]! - bg[2]!);
+  const dist = (i: number) => Math.hypot(data[i]! - bg[0]!, data[i + 1]! - bg[1]!, data[i + 2]! - bg[2]!);
 
   const HARD = 16; // definitely background
   const SOFT = 34; // feathered edge
@@ -80,11 +79,16 @@ export async function cutout(input: Buffer) {
 export async function cutoutFromMenu(crop: Crop, erase: Crop[] = []) {
   let image = sharp(MENU).extract(crop);
   if (erase.length) {
-    const { data } = await sharp(MENU).extract({ left: crop.left, top: crop.top, width: 1, height: 1 }).raw().toBuffer({ resolveWithObject: true });
+    const { data } = await sharp(MENU)
+      .extract({ left: crop.left, top: crop.top, width: 1, height: 1 })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
     const background = { r: data[0]!, g: data[1]!, b: data[2]!, alpha: 1 };
     const patches = await Promise.all(
       erase.map(async (r) => ({
-        input: await sharp({ create: { width: r.width, height: r.height, channels: 4, background } }).png().toBuffer(),
+        input: await sharp({ create: { width: r.width, height: r.height, channels: 4, background } })
+          .png()
+          .toBuffer(),
         left: r.left,
         top: r.top,
       })),

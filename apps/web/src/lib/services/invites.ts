@@ -22,10 +22,22 @@ export async function listOpenInvites() {
   });
 }
 
-async function deliver(invite: { email: string; name: string | null; role: "ADMIN" | "CASHIER" }, token: string, inviterName: string, baseUrl: string, expiresAt: Date) {
+async function deliver(
+  invite: { email: string; name: string | null; role: "ADMIN" | "CASHIER" },
+  token: string,
+  inviterName: string,
+  baseUrl: string,
+  expiresAt: Date,
+) {
   return sendMail({
     to: invite.email,
-    ...inviteEmail({ name: invite.name, inviterName, role: invite.role, link: `${baseUrl}/invite/${token}`, expiresAt }),
+    ...inviteEmail({
+      name: invite.name,
+      inviterName,
+      role: invite.role,
+      link: `${baseUrl}/invite/${token}`,
+      expiresAt,
+    }),
   });
 }
 
@@ -115,7 +127,8 @@ export async function findInviteByToken(token: string) {
 
 export async function acceptInvite(token: string, input: { name: string; password: string }) {
   const invite = await findInviteByToken(token);
-  if (!invite) throw new HttpError(410, "This invite link has expired or was already used. Ask the owner for a new one.");
+  if (!invite)
+    throw new HttpError(410, "This invite link has expired or was already used. Ask the owner for a new one.");
   const passwordHash = await bcrypt.hash(input.password, 12);
 
   const user = await db.$transaction(async (tx) => {

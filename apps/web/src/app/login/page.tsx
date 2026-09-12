@@ -15,7 +15,9 @@ export default function LoginPage() {
         <Logo priority className="h-auto w-72 animate-rise motion-reduce:animate-none" />
         <div className="w-full animate-rise rounded-3xl border-2 border-navy bg-paper p-6 [animation-delay:60ms] motion-reduce:animate-none">
           <h1 className="font-display text-2xl font-extrabold">Sign in</h1>
-          <p className="mb-5 text-sm font-semibold text-navy-soft">Cashiers go to the register, owners to the dashboard.</p>
+          <p className="mb-5 text-sm font-semibold text-navy-soft">
+            Cashiers go to the register, owners to the dashboard.
+          </p>
           <Suspense>
             <LoginForm />
           </Suspense>

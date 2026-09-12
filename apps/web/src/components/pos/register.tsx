@@ -1,10 +1,10 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import Image from "next/image";
 import { useState } from "react";
 import useSWR from "swr";
-import { Panel, PriceRow, SectionTag, Sparkles, EmptyState } from "@/components/ui/brand";
+import { EmptyState, Panel, PriceRow, SectionTag, Sparkles } from "@/components/ui/brand";
+import { cn } from "@/lib/cn";
 import { formatK, mediaUrl } from "@/lib/format";
 import type { MenuModifier, MenuProduct } from "@/lib/services/menu";
 import { CartDrawer, CartPanel } from "./cart";
@@ -60,9 +60,7 @@ export function Register({
                   />
                 )}
               </div>
-              {product.tagline && (
-                <p className="mt-1 text-sm font-semibold text-navy-soft">{product.tagline}</p>
-              )}
+              {product.tagline && <p className="mt-1 text-sm font-semibold text-navy-soft">{product.tagline}</p>}
               <div className="mt-3 flex flex-col gap-1.5">
                 {product.variants.map((variant) => (
                   <button
@@ -131,9 +129,7 @@ function SeasoningStrip({ modifiers }: { modifiers: MenuModifier[] }) {
             {group.items.map((m) => (
               <li
                 key={m.id}
-                className={cn(
-                  "rounded-full border-2 border-navy/15 bg-cream px-3 py-1 text-sm font-bold",
-                )}
+                className={cn("rounded-full border-2 border-navy/15 bg-cream px-3 py-1 text-sm font-bold")}
               >
                 {m.name}
                 {m.price > 0 && <span className="ml-1 text-navy-soft">+{formatK(m.price)}</span>}

@@ -8,8 +8,8 @@
 import "dotenv/config";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
 import { ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import sharp from "sharp";
 import { cutoutFromMenu, LOGO_CROP, LOGO_ERASE, MENU } from "./cutout";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -43,7 +43,11 @@ async function build() {
   for (const c of CROPS) {
     const { key, ...crop } = c;
     const png = await cutoutFromMenu(crop, key === "brand/logo.webp" ? LOGO_ERASE : []);
-    files.push({ key, body: await sharp(png).webp({ quality: 88, alphaQuality: 90 }).toBuffer(), contentType: "image/webp" });
+    files.push({
+      key,
+      body: await sharp(png).webp({ quality: 88, alphaQuality: 90 }).toBuffer(),
+      contentType: "image/webp",
+    });
   }
   files.push({
     key: "brand/menu-board.webp",

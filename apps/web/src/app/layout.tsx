@@ -11,7 +11,8 @@ const baloo = Baloo_2({
 });
 const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
 
-const description = "Crispy outside, happy inside. The Potatoni register and owner dashboard — fries, pom-pom and chicken bites in Bandung.";
+const description =
+  "Crispy outside, happy inside. The Potatoni register and owner dashboard — fries, pom-pom and chicken bites in Bandung.";
 
 export const metadata: Metadata = {
   // Absolute URLs for share images; set APP_URL to the deployed domain.

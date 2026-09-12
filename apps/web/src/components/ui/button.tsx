@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/cn";
 import type { ComponentProps } from "react";
+import { cn } from "@/lib/cn";
 
 // Press feedback: scale(0.97) on :active, 160ms strong ease-out (animate skill → Button press).
 export const buttonVariants = cva(

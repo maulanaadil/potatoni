@@ -57,7 +57,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - name: ESLint
+      # Biome (format, imports, lint) in every workspace, then ESLint's React Compiler/Next rules in apps/web.
+      - name: Biome + ESLint
         run: pnpm lint
 
   typecheck:

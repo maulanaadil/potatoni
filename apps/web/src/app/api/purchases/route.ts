@@ -14,12 +14,14 @@ export const GET = handler(async (request) => {
   const session = await requireApiSession();
   const url = new URL(request.url);
   const isAdmin = session.role === "ADMIN";
-  const from = isAdmin && url.searchParams.get("from")
-    ? startOfJakartaDay(new Date(`${url.searchParams.get("from")}T12:00:00+07:00`))
-    : startOfJakartaDay();
-  const to = isAdmin && url.searchParams.get("to")
-    ? startOfJakartaDay(new Date(`${url.searchParams.get("to")}T12:00:00+07:00`), 1)
-    : undefined;
+  const from =
+    isAdmin && url.searchParams.get("from")
+      ? startOfJakartaDay(new Date(`${url.searchParams.get("from")}T12:00:00+07:00`))
+      : startOfJakartaDay();
+  const to =
+    isAdmin && url.searchParams.get("to")
+      ? startOfJakartaDay(new Date(`${url.searchParams.get("to")}T12:00:00+07:00`), 1)
+      : undefined;
   const location = isAdmin ? url.searchParams.get("location") : null;
 
   const purchases = await db.purchase.findMany({

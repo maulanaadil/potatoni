@@ -2,7 +2,7 @@
 
 import { Drawer } from "@base-ui/react/drawer";
 import NumberFlow from "@number-flow/react";
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useId, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { Panel, Sparkles } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
@@ -87,7 +87,9 @@ export function CartPanel({ variant = "sidebar", onDone }: { variant?: "sidebar"
     const snapshot = { lines, customerName };
     clear();
     // One tap wipes the whole order, so make it forgiving.
-    toast("Order cleared", { action: { label: "Undo", onClick: () => restore(snapshot.lines, snapshot.customerName) } });
+    toast("Order cleared", {
+      action: { label: "Undo", onClick: () => restore(snapshot.lines, snapshot.customerName) },
+    });
   }
 
   const sheet = variant === "sheet";
@@ -100,7 +102,11 @@ export function CartPanel({ variant = "sidebar", onDone }: { variant?: "sidebar"
         sheet && "touch-none select-none", // drag zone for the sheet
       )}
     >
-      {sheet ? <Drawer.Title className={titleClass}>Current order</Drawer.Title> : <h2 className={titleClass}>Current order</h2>}
+      {sheet ? (
+        <Drawer.Title className={titleClass}>Current order</Drawer.Title>
+      ) : (
+        <h2 className={titleClass}>Current order</h2>
+      )}
       <div className="flex items-center gap-1">
         {visibleLines.length > 0 && (
           <button
@@ -136,11 +142,13 @@ export function CartPanel({ variant = "sidebar", onDone }: { variant?: "sidebar"
                 {line.productName} <span className="text-navy-soft">{line.size}</span>
               </p>
               {line.modifiers.length > 0 && (
-                <p className="truncate text-xs font-semibold text-navy-soft">{line.modifiers.map((m) => m.name).join(" · ")}</p>
+                <p className="truncate text-xs font-semibold text-navy-soft">
+                  {line.modifiers.map((m) => m.name).join(" · ")}
+                </p>
               )}
               <p className="text-sm font-bold tabular-nums">{formatRupiah(line.unitPrice * line.quantity)}</p>
             </div>
-            <QuantityStepper value={line.quantity} onChange={(q) => setQuantity(line.key, q)} size="sm" />
+            <QuantityStepper value={line.quantity} onChange={(q) => setQuantity(line.key, q)} />
           </li>
         ))}
       </ul>
@@ -155,23 +163,7 @@ export function CartPanel({ variant = "sidebar", onDone }: { variant?: "sidebar"
         maxLength={60}
       />
       <VoucherField preview={voucher} />
-      <div className="grid grid-cols-2 gap-1 rounded-2xl border-2 border-navy bg-paper p-1" role="radiogroup">
-        {(["QRIS", "CASH"] as const).map((method) => (
-          <button
-            key={method}
-            type="button"
-            role="radio"
-            aria-checked={paymentMethod === method}
-            onClick={() => setPaymentMethod(method)}
-            className={cn(
-              "h-11 rounded-xl font-display font-bold outline-none transition-[background-color,color,transform] duration-160 ease-out-strong focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97]",
-              paymentMethod === method ? "bg-navy text-cream" : "hover:bg-navy/5",
-            )}
-          >
-            {method === "QRIS" ? "QRIS" : "Cash"}
-          </button>
-        ))}
-      </div>
+      <PaymentMethodPicker value={paymentMethod} onChange={setPaymentMethod} />
     </>
   );
 
@@ -251,7 +243,9 @@ export function CartPanel({ variant = "sidebar", onDone }: { variant?: "sidebar"
   return (
     <Panel className="flex flex-col">
       {header}
-      <div className="max-h-[45dvh] flex-1 overflow-y-auto overscroll-contain px-4 lg:max-h-[calc(100dvh-26rem)]">{lineList}</div>
+      <div className="max-h-[45dvh] flex-1 overflow-y-auto overscroll-contain px-4 lg:max-h-[calc(100dvh-26rem)]">
+        {lineList}
+      </div>
       <div className="flex flex-col gap-3 border-t-2 border-navy/10 bg-cream/60 px-4 py-4">
         {fields}
         {summary}
@@ -304,5 +298,39 @@ export function CartDrawer() {
         </Drawer.Portal>
       </Drawer.VirtualKeyboardProvider>
     </Drawer.Root>
+  );
+}
+
+type Method = "QRIS" | "CASH";
+
+/**
+ * Native radios (visually a segmented control) so arrow keys switch the method. useId keeps
+ * the sidebar and sheet carts, which can both be mounted, from sharing one radio group.
+ */
+function PaymentMethodPicker({ value, onChange }: { value: Method; onChange: (method: Method) => void }) {
+  const name = useId();
+  return (
+    <fieldset className="grid grid-cols-2 gap-1 rounded-2xl border-2 border-navy bg-paper p-1">
+      <legend className="sr-only">Payment method</legend>
+      {(["QRIS", "CASH"] as const).map((method) => (
+        <label
+          key={method}
+          className={cn(
+            "grid h-11 cursor-pointer place-items-center rounded-xl font-display font-bold transition-[background-color,color,transform] duration-160 ease-out-strong has-focus-visible:ring-4 has-focus-visible:ring-sun/70 active:scale-[0.97]",
+            value === method ? "bg-navy text-cream" : "hover:bg-navy/5",
+          )}
+        >
+          <input
+            type="radio"
+            name={name}
+            value={method}
+            checked={value === method}
+            onChange={() => onChange(method)}
+            className="sr-only"
+          />
+          {method === "QRIS" ? "QRIS" : "Cash"}
+        </label>
+      ))}
+    </fieldset>
   );
 }

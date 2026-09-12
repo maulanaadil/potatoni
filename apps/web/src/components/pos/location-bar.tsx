@@ -22,12 +22,7 @@ export function LocationBar() {
 
   return (
     <>
-      <div
-        className={cn(
-          "border-b-2 border-navy",
-          location ? "bg-paper" : "bg-sun",
-        )}
-      >
+      <div className={cn("border-b-2 border-navy", location ? "bg-paper" : "bg-sun")}>
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-2 md:px-6">
           <span aria-hidden className="text-lg">
             📍
@@ -54,7 +49,7 @@ export function LocationBar() {
         title="Where are we selling today?"
         description="New orders and stock purchases are grouped under this location."
       >
-        <ul className="flex flex-col gap-2" role="radiogroup">
+        <ul className="flex flex-col gap-2">
           {locations.map((l) => (
             <li key={l.id}>
               <LocationOption
@@ -98,11 +93,12 @@ function LocationOption({
   subtitle?: string;
   badge?: string;
 }) {
+  // Plain buttons, not radios: picking one closes the dialog, and native radios would fire
+  // on every arrow key.
   return (
     <button
       type="button"
-      role="radio"
-      aria-checked={selected}
+      aria-current={selected ? "true" : undefined}
       onClick={onClick}
       className={cn(
         "flex min-h-14 w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left outline-none focus-visible:ring-4 focus-visible:ring-sun/70 transition-[background-color,border-color,transform] duration-160 ease-out-strong active:scale-[0.98]",
