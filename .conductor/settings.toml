@@ -1,0 +1,28 @@
+"$schema" = "https://conductor.build/schemas/settings.repo.schema.json"
+
+[scripts]
+# pnpm install also runs `prisma generate` (apps/web postinstall).
+setup = """
+source /opt/homebrew/opt/nvm/nvm.sh 2>/dev/null && nvm use >/dev/null 2>&1
+corepack enable >/dev/null 2>&1 || true
+pnpm install
+if [ ! -f apps/web/.env ]; then
+  echo "⚠️  apps/web/.env is missing — copy it into $CONDUCTOR_ROOT_PATH/apps/web/.env so new workspaces get it (see apps/web/.env.example)."
+fi
+"""
+run_mode = "concurrent"
+
+[scripts.run.dev]
+available_in = ["local"]
+command = "source /opt/homebrew/opt/nvm/nvm.sh 2>/dev/null && nvm use >/dev/null 2>&1; PORT=$CONDUCTOR_PORT pnpm --filter web dev"
+default = true
+icon = "play"
+
+[scripts.run.studio]
+available_in = ["local"]
+command = "pnpm --filter web exec prisma studio --port $((CONDUCTOR_PORT + 1))"
+icon = "database"
+
+[scripts.run.migrate]
+command = "pnpm --filter web db:deploy"
+icon = "database-zap"

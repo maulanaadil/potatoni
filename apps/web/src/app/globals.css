@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+/* Design tokens only — all styling lives in Tailwind classes. */
+@theme {
+  /* Menu-board palette */
+  --color-cream: #f8f1e6;
+  --color-cream-deep: #efe3cf;
+  --color-paper: #fffaf2;
+  --color-navy: #2a2670;
+  --color-navy-soft: #5a56a0;
+  --color-sun: #ffc62b;
+  --color-sun-deep: #f2b200;
+  --color-chili: #e8862a;
+  --color-tomato: #d9442b;
+  --color-leaf: #2f9e6b;
+
+  /* Chart series — validated with the dataviz palette script against --color-paper
+     (lightness band, chroma, CVD ΔE, contrast ≥ 3:1 all pass). */
+  --color-chart-sales: #4b478f;
+  --color-chart-purchases: #c9651a;
+  --color-chart-grid: #e7dccb;
+
+  --font-display: var(--font-baloo), ui-rounded, system-ui, sans-serif;
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+
+  /* Motion — strong curves from the animate skill; never ease-in on UI. */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --animate-rise: rise 300ms var(--ease-out-strong) both;
+  --animate-pop: pop 240ms var(--ease-out-strong) both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+  }
+}
+
+/* Touch devices fire :hover on tap — only hover on real pointers. */
+@custom-variant hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
