@@ -27,8 +27,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Metadata files (manifest, robots, icons, share images) must load without a session.
+  // Metadata files (manifest, robots, icons, share images) and the PWA's service worker and offline
+  // page must load without a session.
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|robots.txt|icons/|wasm/|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|robots.txt|sw.js|offline.html|icons/|wasm/|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt)$).*)",
   ],
 };
