@@ -92,7 +92,7 @@ export function Overview({
       )}
 
       {/* Keep the old numbers on screen while the next location loads, just dimmed. */}
-      <div className={cn("transition-opacity duration-150", isLoading && "opacity-60")}>
+      <div className={cn("animate-rise transition-opacity duration-150 motion-reduce:animate-none", isLoading && "opacity-60")}>
         {selected ? <LocationView stats={stats} summary={selected} /> : <AllView stats={stats} />}
 
         {!selected && locations.length > 0 && (
@@ -144,7 +144,7 @@ function AllView({ stats }: { stats: DashboardStats }) {
     <>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,2fr)]">
         {/* Exactly one hero figure per view */}
-        <Panel className="flex animate-rise flex-col justify-between gap-4 bg-navy p-5 text-cream motion-reduce:animate-none">
+        <Panel className="flex flex-col justify-between gap-4 bg-navy p-5 text-cream">
           <p className="font-display text-lg font-bold">Sales today</p>
           <p className="text-5xl leading-none font-extrabold md:text-6xl">{formatRupiah(today.sales)}</p>
           <p className="text-sm font-bold text-cream/80">
@@ -242,12 +242,8 @@ function LocationView({ stats, summary }: { stats: DashboardStats; summary: Loca
 function Tiles({ tiles }: { tiles: { label: string; value: string; note?: string; tone?: string }[] }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-      {tiles.map((tile, i) => (
-        <Panel
-          key={tile.label}
-          style={{ animationDelay: `${(i + 1) * 40}ms` }}
-          className="flex animate-rise flex-col gap-1 p-4 motion-reduce:animate-none"
-        >
+      {tiles.map((tile) => (
+        <Panel key={tile.label} className="flex flex-col gap-1 p-4">
           <p className="text-sm font-bold text-navy-soft">{tile.label}</p>
           <p className={cn("text-2xl font-extrabold", tile.tone)}>{tile.value}</p>
           {tile.note && <p className="text-xs font-bold text-navy-soft">{tile.note}</p>}

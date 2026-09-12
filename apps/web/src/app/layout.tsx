@@ -42,6 +42,7 @@ export const viewport: Viewport = {
   themeColor: "#f8f1e6",
   colorScheme: "light",
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
