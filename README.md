@@ -24,6 +24,7 @@ Built for laptop, iPad (portrait and landscape) and iPhone.
 | Database | PostgreSQL (Prisma Postgres) via Prisma 7 + `@prisma/adapter-pg` |
 | Auth | JWT (HS256, `jose`) in an httpOnly cookie, also accepted as `Authorization: Bearer` |
 | Storage | S3-compatible bucket (Tigris `t3.storage.dev`), streamed through `/api/media/*` |
+| Image editing | `react-easy-crop` in `ImageEditor`: crop, aspect presets, zoom, rotate, straighten, flip, brightness/contrast/saturation, exported in the browser as WebP (max 1600px) before upload |
 | Charts | Recharts, with a palette checked by the dataviz validator |
 | AI assistant | `apps/ai`: Hono service, Claude (Anthropic SDK) tool use, read-only SQL tools |
 

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ImageEditor } from "@/components/ui/image-editor";
 import { api } from "@/lib/client";
 import { cn } from "@/lib/cn";
 import { mediaUrl } from "@/lib/format";
@@ -78,7 +79,14 @@ export function ImageUpload({
   folder: string;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
+
+  function closeEditor() {
+    if (editing?.startsWith("blob:")) URL.revokeObjectURL(editing);
+    setEditing(null);
+    if (input.current) input.current.value = "";
+  }
 
   async function upload(file: File) {
     setUploading(true);
@@ -88,12 +96,12 @@ export function ImageUpload({
       body.set("folder", folder);
       const { key } = await api<{ key: string }>("/api/admin/uploads", { body });
       onChange(key);
+      closeEditor();
       toast.success("Image uploaded");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
       setUploading(false);
-      if (input.current) input.current.value = "";
     }
   }
 
@@ -116,6 +124,11 @@ export function ImageUpload({
           {uploading ? "Uploading…" : value ? "Replace image" : "Upload image"}
         </Button>
         {value && (
+          <Button intent="outline" size="sm" disabled={uploading} onClick={() => setEditing(mediaUrl(value))}>
+            Edit
+          </Button>
+        )}
+        {value && (
           <Button intent="ghost" size="sm" onClick={() => onChange(null)}>
             Remove
           </Button>
@@ -124,10 +137,14 @@ export function ImageUpload({
       <input
         ref={input}
         type="file"
-        accept="image/png,image/jpeg,image/webp"
+        accept="image/*"
         className="hidden"
-        onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) setEditing(URL.createObjectURL(file));
+        }}
       />
+      <ImageEditor src={editing} onCancel={closeEditor} onDone={upload} />
     </div>
   );
 }
