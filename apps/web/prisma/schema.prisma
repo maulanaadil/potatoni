@@ -307,3 +307,11 @@ model AssistantMessage {
 
   @@index([chatId, createdAt])
 }
+
+// The assistant's editable instructions (Dashboard → Assistant → Instructions); no row = default.
+model AssistantSettings {
+  id           String   @id @default("default")
+  instructions String
+  updatedBy    String?
+  updatedAt    DateTime @updatedAt
+}

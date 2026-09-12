@@ -204,6 +204,10 @@ export const assistantInput = z.object({
     .default([]),
 });
 
+export const assistantInstructionsInput = z.object({
+  instructions: z.string().trim().min(20, "Write at least a sentence").max(20_000),
+});
+
 export const assistantActionInput = z.object({
   index: z.number().int().min(0).max(4),
   status: z.enum(["done", "dismissed"]),

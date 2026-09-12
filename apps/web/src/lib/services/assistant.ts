@@ -1,6 +1,8 @@
 import "server-only";
 import type { AssistantRole, Prisma } from "@/generated/prisma/client";
+import { logActivity } from "../activity";
 import { HttpError } from "../api";
+import { type AssistantInstructionsView, DEFAULT_ASSISTANT_INSTRUCTIONS } from "../assistant-instructions";
 import {
   type AssistantAction,
   type AssistantChatSummary,
@@ -9,11 +11,11 @@ import {
 } from "../assistant-types";
 import { db } from "../db";
 import { getObject } from "../s3";
+import type { Session } from "../session";
 
-// Answers can take several tool rounds plus a web search (~1.5 min for the long ones).
 const TIMEOUT_MS = 180_000;
-// The assistant service accepts up to 40 messages per question.
 const MAX_HISTORY = 40;
+const SETTINGS_ID = "default";
 
 const role = (r: AssistantRole) => (r === "USER" ? ("user" as const) : ("assistant" as const));
 
@@ -39,10 +41,7 @@ const toView = (m: MessageRow): AssistantMessage => ({
 
 const asJson = (actions: AssistantAction[]) => actions as unknown as Prisma.InputJsonValue;
 
-/**
- * What an earlier answer proposed (the form itself isn't part of the text), so a follow-up like
- * "the oil should be after the discount" corrects the real numbers instead of starting over.
- */
+/** Earlier forms aren't part of the answer text; without this a follow-up correction starts from scratch. */
 function proposalNote(actions: AssistantAction[]) {
   return actions
     .map((a) =>
@@ -62,10 +61,66 @@ function proposalNote(actions: AssistantAction[]) {
     .join("\n");
 }
 
-/** "What's our next bazaar in Bandung, and how should…" — the first line of the first question. */
 function chatTitle(message: string) {
   const line = message.trim().split("\n")[0] ?? "";
   return line.length > 80 ? `${line.slice(0, 77)}…` : line;
+}
+
+async function callAssistantService(path: string, token: string, body?: unknown) {
+  const res = await fetch(`${process.env.AI_SERVICE_URL ?? "http://localhost:4000"}${path}`, {
+    method: body === undefined ? "GET" : "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  }).catch((err: unknown) => {
+    throw err instanceof Error && err.name === "TimeoutError"
+      ? new HttpError(504, "The assistant took too long to answer — please try again")
+      : new HttpError(503, "The assistant service isn't running (apps/ai)");
+  });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new HttpError(res.status, typeof data.error === "string" ? data.error : "The assistant service failed");
+  }
+  return data;
+}
+
+export async function getAssistantInstructions(): Promise<AssistantInstructionsView> {
+  const settings = await db.assistantSettings.findUnique({ where: { id: SETTINGS_ID } });
+  return {
+    instructions: settings?.instructions ?? DEFAULT_ASSISTANT_INSTRUCTIONS,
+    isDefault: !settings,
+    updatedAt: settings?.updatedAt.toISOString() ?? null,
+    updatedBy: settings?.updatedBy ?? null,
+  };
+}
+
+/** Saves the instructions, or goes back to the default when `instructions` is null. */
+export async function saveAssistantInstructions(instructions: string | null, session: Session) {
+  if (instructions === null) {
+    await db.assistantSettings.deleteMany({ where: { id: SETTINGS_ID } });
+  } else {
+    await db.assistantSettings.upsert({
+      where: { id: SETTINGS_ID },
+      create: { id: SETTINGS_ID, instructions, updatedBy: session.name },
+      update: { instructions, updatedBy: session.name },
+    });
+  }
+  await logActivity({
+    action: instructions === null ? "assistant.instructions_reset" : "assistant.instructions_updated",
+    message: `${session.name} ${instructions === null ? "reset" : "updated"} the assistant's instructions`,
+    source: "DASHBOARD",
+    session,
+  });
+  return getAssistantInstructions();
+}
+
+/** The fixed rules apps/ai appends to the instructions; null when the service is down. */
+export async function getAssistantRules(token: string) {
+  const data = await callAssistantService("/rules", token).catch(() => null);
+  return typeof data?.rules === "string" ? data.rules : null;
 }
 
 export async function listAssistantChats(userId: string): Promise<AssistantChatSummary[]> {
@@ -97,7 +152,6 @@ export async function deleteAssistantChat(userId: string, chatId: string) {
   if (!count) throw new HttpError(404, "That chat no longer exists");
 }
 
-/** Marks a proposed purchase/location as recorded or dismissed, so the chat history shows it. */
 export async function setAssistantActionStatus(
   userId: string,
   messageId: string,
@@ -126,9 +180,8 @@ async function loadImage(key: string) {
 }
 
 /**
- * Sends the question (with its images) and the chat's saved history to the assistant service
- * (apps/ai), which re-checks the JWT. Both turns are saved only once the answer arrives, so a
- * failed question never clutters the history, and an answer still lands if the browser closed.
+ * Asks apps/ai with the chat's saved history and the team's instructions. Both turns are saved
+ * only once the answer arrives, so failed questions never clutter the history.
  */
 export async function askAssistant({
   userId,
@@ -157,7 +210,6 @@ export async function askAssistant({
     : null;
   if (chatId && !chat) throw new HttpError(404, "That chat no longer exists");
 
-  // Earlier images aren't re-sent (tokens); the model only learns that one was there.
   let history = [
     ...(chat?.messages ?? []).map((m) => ({
       role: role(m.role),
@@ -171,34 +223,16 @@ export async function askAssistant({
     })),
     { role: "user" as const, content: message, images: await Promise.all(imageKeys.map(loadImage)) },
   ].slice(-MAX_HISTORY);
-  // Claude needs the conversation to open with a question.
   while (history[0]?.role === "assistant") history = history.slice(1);
 
   const askedAt = new Date();
-  const res = await fetch(`${process.env.AI_SERVICE_URL ?? "http://localhost:4000"}/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ messages: history }),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  }).catch((err: unknown) => {
-    if (err instanceof Error && err.name === "TimeoutError") {
-      throw new HttpError(504, "The assistant took too long to answer — please try again");
-    }
-    throw new HttpError(503, "The assistant service isn't running (apps/ai)");
-  });
-
-  const data = (await res.json().catch(() => ({}))) as {
-    reply?: string;
-    tools?: string[];
-    actions?: unknown;
-    replies?: string[];
-    error?: string;
-  };
-  const reply = data.reply;
-  if (!res.ok || !reply) {
-    throw new HttpError(res.ok ? 502 : res.status, data.error ?? "The assistant sent an invalid answer");
-  }
+  const { instructions } = await getAssistantInstructions();
+  const data = await callAssistantService("/chat", token, { messages: history, instructions });
+  const reply = typeof data.reply === "string" ? data.reply : "";
+  if (!reply) throw new HttpError(502, "The assistant sent an invalid answer");
   const actions = assistantActionsSchema.parse(data.actions ?? []);
+  const tools = Array.isArray(data.tools) ? data.tools.map(String) : [];
+  const replies = Array.isArray(data.replies) ? data.replies.map(String).slice(0, 3) : [];
 
   return db.$transaction(async (tx) => {
     const target =
@@ -211,12 +245,11 @@ export async function askAssistant({
         chatId: target.id,
         role: "ASSISTANT",
         content: reply,
-        tools: data.tools ?? [],
+        tools,
         actions: actions.length ? asJson(actions) : undefined,
-        replies: (data.replies ?? []).slice(0, 3),
+        replies,
       },
     });
-    // Moves the chat to the top of the history list.
     await tx.assistantChat.update({ where: { id: target.id }, data: { updatedAt: new Date() } });
     return { chatId: target.id, messages: [toView(question), toView(answer)] };
   });

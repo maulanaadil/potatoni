@@ -4,7 +4,6 @@ import { getSessionToken } from "@/lib/auth";
 import { askAssistant } from "@/lib/services/assistant";
 import { assistantInput } from "@/lib/validators";
 
-/** Asks the assistant in one of the signed-in owner's chats (a new one when chatId is empty). */
 export const POST = handler(async (request) => {
   const session = await requireApiSession("ADMIN");
   const { chatId, message, imageKeys } = await parseBody(request, assistantInput);

@@ -5,7 +5,6 @@ import { assistantActionInput } from "@/lib/validators";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-/** Records whether a proposed purchase/location was saved or dismissed (the save itself goes through its own API). */
 export const PATCH = handler(async (request, { params }: Ctx) => {
   const session = await requireApiSession("ADMIN");
   const { id } = await params;

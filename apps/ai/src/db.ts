@@ -1,7 +1,7 @@
 import pg from "pg";
 import { env } from "./env.ts";
 
-// Plain numbers for sums/counts (bigint, numeric) and YYYY-MM-DD strings for @db.Date columns.
+// Plain numbers for bigint/numeric sums and counts, YYYY-MM-DD strings for @db.Date columns.
 pg.types.setTypeParser(pg.types.builtins.INT8, Number);
 pg.types.setTypeParser(pg.types.builtins.NUMERIC, Number);
 pg.types.setTypeParser(pg.types.builtins.DATE, (value) => value);
@@ -16,7 +16,7 @@ pool.on("error", (err) => console.warn(`[db] idle connection dropped: ${err.mess
 
 export type Query = <Row = Record<string, unknown>>(sql: string, params?: unknown[]) => Promise<Row[]>;
 
-// Same symptoms as apps/web/src/lib/db.ts: the pooled Prisma Postgres connection can drop mid-query.
+// The pooled Prisma Postgres connection can drop mid-query (same as apps/web/src/lib/db.ts).
 const isDroppedConnection = (err: unknown) =>
   err instanceof Error &&
   /Connection terminated|ECONNRESET|Connection closed|terminating connection|Client has encountered a connection error/i.test(
@@ -29,7 +29,7 @@ async function attempt<T>(fn: (query: Query) => Promise<T>) {
   try {
     await client.query("BEGIN READ ONLY");
     await client.query("SET LOCAL statement_timeout = '10s'");
-    // One client runs one query at a time, but tools fire several with Promise.all: queue them.
+    // A client runs one query at a time, but tools fire several with Promise.all.
     let queue: Promise<unknown> = Promise.resolve();
     const query: Query = (sql, params) => {
       const run = queue.then(() => client.query(sql, params));
@@ -48,10 +48,7 @@ async function attempt<T>(fn: (query: Query) => Promise<T>) {
   }
 }
 
-/**
- * Runs the queries inside a READ ONLY transaction: the assistant can look at everything
- * but Postgres rejects any write. Safe to retry once on a dropped connection.
- */
+// READ ONLY transaction: Postgres rejects any write, so retrying once on a dropped connection is safe.
 export async function readOnly<T>(fn: (query: Query) => Promise<T>): Promise<T> {
   try {
     return await attempt(fn);

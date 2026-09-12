@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-// Shapes shared by the assistant's API routes and the dashboard chat.
-
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const status = z.enum(["pending", "done", "dismissed"]).default("pending");
 
@@ -14,7 +12,6 @@ export const purchaseProposalSchema = z.object({
   note: z.string().nullish(),
 });
 
-/** A form the assistant filled in; nothing is saved until the owner confirms it. */
 export const assistantActionSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("purchases"),
@@ -33,7 +30,7 @@ export const assistantActionSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-/** Unknown or malformed actions are dropped rather than breaking the chat. */
+// Unknown or malformed actions are dropped rather than breaking the chat.
 export const assistantActionsSchema = z.array(assistantActionSchema).max(5).catch([]);
 
 export type PurchaseProposal = z.infer<typeof purchaseProposalSchema>;
@@ -52,6 +49,5 @@ export type AssistantMessage = {
 
 export type AssistantChatSummary = { id: string; title: string; updatedAt: string; messageCount: number };
 
-/** Keys produced by /api/admin/uploads with folder=assistant. */
 export const ASSISTANT_IMAGE_KEY = /^assistant\/[\w-]+\.(png|jpg|webp)$/;
 export const MAX_ASSISTANT_IMAGES = 3;

@@ -20,11 +20,7 @@ const card = "mt-3 rounded-2xl border-2 border-navy bg-paper p-3 text-navy";
 const removeButton =
   "grid size-8 shrink-0 place-items-center rounded-full text-lg text-navy-soft outline-none transition-[background-color,transform] duration-160 ease-out-strong hover:bg-tomato/10 hover:text-tomato focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97] motion-reduce:active:scale-100";
 
-/**
- * A form the assistant filled in from a message or a photo (a receipt, an event poster).
- * Everything stays editable; nothing is saved until the owner presses Record / Add, and the
- * save goes through the normal API (same validation and activity log as the dashboard).
- */
+// Saves go through the normal APIs, so they get the same validation and activity log as the dashboard.
 export function ActionCard({
   messageId,
   index,
@@ -34,7 +30,6 @@ export function ActionCard({
   messageId: string;
   index: number;
   action: AssistantAction;
-  /** A later answer proposed the same kind of form; only that one can be saved (no double records). */
   superseded?: boolean;
 }) {
   if (action.status !== "pending") return <ActionSettled action={action} />;
@@ -73,8 +68,8 @@ function ActionSettled({ action }: { action: AssistantAction }) {
 
 type Row = { key: number; item: string; quantity: string; unit: string; total: string; supplier: string };
 
-const rowValid = (r: Row) =>
-  r.item.trim() && r.unit.trim() && Number(r.quantity.replace(",", ".")) > 0 && Number(r.total) > 0;
+const quantityOf = (r: Row) => Number(r.quantity.replace(",", "."));
+const rowValid = (r: Row) => r.item.trim() && r.unit.trim() && quantityOf(r) > 0 && Number(r.total) > 0;
 
 function PurchasesCard({ messageId, index, action }: { messageId: string; index: number; action: PurchasesAction }) {
   const setActionStatus = useAssistant((s) => s.setActionStatus);
@@ -103,7 +98,7 @@ function PurchasesCard({ messageId, index, action }: { messageId: string; index:
         await api("/api/purchases", {
           body: {
             item: r.item.trim(),
-            quantity: Number(r.quantity.replace(",", ".")),
+            quantity: quantityOf(r),
             unit: r.unit.trim(),
             total: Number(r.total),
             supplier: r.supplier.trim() || null,

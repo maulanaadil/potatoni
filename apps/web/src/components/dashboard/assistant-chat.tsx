@@ -1,11 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Fragment, type ReactNode, type Ref, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { EmptyState, Panel, Sparkles } from "@/components/ui/brand";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/field";
 import { ImageViewer } from "@/components/ui/image-viewer";
@@ -39,7 +40,6 @@ const TOOL_LABELS: Record<string, string> = {
   code_execution: "web search", // web search filters its results with code
 };
 
-/** Full-page chat (Dashboard → Assistant) with the owner's chat history. Shares state with the widget. */
 export function AssistantChat({ name }: { name: string }) {
   useAssistantSession(true);
   const hasMessages = useAssistant((s) => s.messages.length > 0);
@@ -48,8 +48,7 @@ export function AssistantChat({ name }: { name: string }) {
   const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
-    // Fills the screen below the dashboard chrome (main's padding + the phone/tablet top bar),
-    // so the chat scrolls inside its panel with the composer always in view — not the page.
+    // Viewport minus the dashboard chrome, so only the thread scrolls and the composer stays in view.
     <div
       data-assistant-page
       className="flex h-[calc(100dvh-9.5rem)] min-h-[26rem] flex-col md:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-4rem)]"
@@ -59,6 +58,12 @@ export function AssistantChat({ name }: { name: string }) {
         description="Your marketing and sales sidekick. It reads the register's data, reads photos of receipts and posters, and suggests how to sell more."
         actions={
           <>
+            <Link
+              href="/dashboard/assistant/instructions"
+              className={buttonVariants({ intent: "outline", size: "sm" })}
+            >
+              Instructions
+            </Link>
             <Button intent="outline" size="sm" className="lg:hidden" onClick={() => setHistoryOpen(true)}>
               History
             </Button>
@@ -91,7 +96,6 @@ export function AssistantChat({ name }: { name: string }) {
   );
 }
 
-/** The owner's saved chats: open one to continue it, or delete it. */
 export function AssistantHistory({ onPick }: { onPick?: () => void }) {
   const { data, isLoading } = useSWR<{ chats: AssistantChatSummary[] }>(CHATS_URL);
   const chatId = useAssistant((s) => s.chatId);
@@ -159,7 +163,6 @@ export function AssistantHistory({ onPick }: { onPick?: () => void }) {
   );
 }
 
-/** Messages, the empty state with suggestions, and the "still working" line. */
 export function AssistantThread({
   name,
   compact = false,
@@ -175,7 +178,6 @@ export function AssistantThread({
   const send = useAssistant((s) => s.send);
   const bottom = useRef<HTMLDivElement>(null);
 
-  // Follow new messages and the "Checking the numbers…" line.
   useEffect(() => {
     if (messages.length === 0 && pendingSince === null) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -209,7 +211,6 @@ export function AssistantThread({
                 key={s}
                 type="button"
                 onClick={() => send(s)}
-                // First-time moment: a 50ms stagger; reduced motion keeps the fade only.
                 style={{ animationDelay: `${i * 50}ms` }}
                 className="animate-rise rounded-2xl border-2 border-navy/20 bg-cream px-4 py-3 text-left text-sm font-bold outline-none transition-[border-color,background-color,transform] duration-160 ease-out-strong hover:border-navy hover:bg-cream-deep focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97] motion-reduce:animate-fade motion-reduce:active:scale-100"
               >
@@ -234,7 +235,6 @@ export function AssistantThread({
   );
 }
 
-/** Answers take 10–90s (tool rounds, web search), so show honest progress: elapsed seconds. */
 function Pending({ since }: { since: number }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -267,7 +267,7 @@ function Bubble({
 }) {
   const send = useAssistant((s) => s.send);
   const mine = message.role === "user";
-  const checked = [...new Set(message?.tools?.map((t) => TOOL_LABELS[t] ?? t))];
+  const checked = [...new Set(message.tools?.map((t) => TOOL_LABELS[t] ?? t))];
   const [viewer, setViewer] = useState({ open: false, index: 0 });
 
   return (
@@ -278,7 +278,7 @@ function Bubble({
           mine ? "rounded-br-lg bg-navy text-cream" : "w-full rounded-bl-lg border-2 border-navy/15 bg-cream",
         )}
       >
-        {message?.images?.length > 0 && (
+        {message.images?.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {message.images.map((key, index) => (
               <button
@@ -305,7 +305,7 @@ function Bubble({
         ) : (
           <Markdown text={message.content} />
         )}
-        {message?.actions?.map((action, index) => (
+        {message.actions?.map((action, index) => (
           <ActionCard
             key={action.type}
             messageId={message.id}
@@ -323,7 +323,7 @@ function Bubble({
           </div>
         )}
       </div>
-      {last && !mine && message?.replies?.length > 0 && (
+      {last && !mine && message.replies?.length > 0 && (
         <div className="mt-2 flex max-w-[min(42rem,92%)] flex-wrap gap-2">
           {message.replies.map((reply, i) => (
             <button
@@ -368,10 +368,7 @@ function CopyButton({ text }: { text: string }) {
 
 const UPLOADABLE = ["image/png", "image/jpeg", "image/webp"];
 
-/**
- * Long edge ≤ 1568px (what Claude reads at full detail), re-encoded as JPEG, so phone photos
- * stay small; HEIC and other formats the upload API refuses get converted too.
- */
+// Claude reads images at full detail up to a 1568px long edge; JPEG re-encoding also converts HEIC etc. the upload API refuses.
 async function shrinkImage(file: File): Promise<File> {
   try {
     const bitmap = await createImageBitmap(file);
@@ -388,7 +385,6 @@ async function shrinkImage(file: File): Promise<File> {
   }
 }
 
-/** Question box: Enter sends, Shift+Enter adds a line; attach or paste up to 3 photos. */
 export function AssistantComposer({
   className,
   inputRef,
@@ -520,7 +516,7 @@ export function AssistantComposer({
             }
           }}
           onKeyDown={(e) => {
-            // Skip while an IME is composing (e.g. picking a character).
+            // Enter also confirms IME composition; don't send then.
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
               submit();
@@ -544,11 +540,7 @@ export function AssistantComposer({
   );
 }
 
-/**
- * Just enough Markdown for the assistant's replies (the prompt asks for no tables/code):
- * headings, bullet and numbered lists, paragraphs, **bold**, *italic*, `code` and links.
- * Builds React elements, never HTML strings. Keys are source line numbers / character offsets.
- */
+// Minimal Markdown (the prompt asks for no tables/code), built as React elements — never HTML strings.
 function Markdown({ text }: { text: string }) {
   const blocks: ReactNode[] = [];
   let list: { ordered: boolean; start: number; items: { line: number; text: string }[] } | null = null;
@@ -577,7 +569,7 @@ function Markdown({ text }: { text: string }) {
     const bullet = line.match(/^[-*•]\s+(.*)$/);
     const numbered = line.match(/^\d+[.)]\s+(.*)$/);
 
-    // Blank lines and "---" dividers both just end the current block.
+    // Blank lines and "---" dividers end the current block.
     if (!line || /^([-*_])\1{2,}$/.test(line)) {
       flushParagraph();
       flushList();

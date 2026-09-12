@@ -8,10 +8,9 @@ export class HttpError extends Error {
   }
 }
 
-/** Maps anything thrown while answering into a status + English message for the dashboard. */
 export function toHttpError(err: unknown): HttpError {
   if (err instanceof HttpError) return err;
-  // Most specific first. The SDK has already retried 429 / 5xx / 529 by the time these surface.
+  // Most specific subclass first; the SDK has already retried 429 / 5xx / 529.
   if (err instanceof Anthropic.RateLimitError) {
     return new HttpError(429, "The assistant is getting too many requests — try again in a minute");
   }

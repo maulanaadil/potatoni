@@ -2,9 +2,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { inputSchema } from "./tools.ts";
 
-// Proposal tools: the assistant can't save anything (its database access is read-only), but it
-// can fill in a form that the dashboard shows under the answer. Nothing is saved until the
-// owner reviews it and presses Record / Add. suggest_replies turns into tappable follow-ups.
+// The assistant can't write, so it proposes forms; nothing is saved until the owner presses Record / Add.
 
 const dayKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
 const text = (max: number) => z.string().trim().max(max);
@@ -68,7 +66,6 @@ export const proposalTools: Anthropic.Beta.BetaTool[] = [
 
 export const isProposal = (name: string) => proposalTools.some((t) => t.name === name);
 
-/** Validates a proposal call; the error goes back to the model so it can fix the arguments. */
 export function readProposal(
   name: string,
   input: unknown,

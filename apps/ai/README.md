@@ -10,7 +10,9 @@ An internal AI agent for the owner: a senior marketer and personal assistant tha
 
 1. The dashboard sends a question (and up to 3 photos) to `POST /api/admin/assistant` (web). The web app keeps each owner's chats in Postgres (`AssistantChat`, `AssistantMessage`). It loads the chat's saved history, adds the photos as base64, and forwards everything with the owner's JWT to this service's `POST /chat`. Both turns are saved once the answer arrives. This service never writes.
 2. The service verifies the JWT itself (`JWT_SECRET`, owners only), then runs the agent loop (`src/agent.ts`): Claude picks tools, the service runs them in parallel, and the results go back to Claude. This repeats for up to 8 rounds; the last round has to answer in text.
-3. The system prompt (`src/prompt.ts`) sets the persona, the business context, today's date (WIB) and the reply style.
+3. The system prompt has two parts:
+   - The team's **instructions** (persona, business context, style). They're edited in **Dashboard → Assistant → Instructions**, stored in `AssistantSettings`, and sent with every question. `{{owner_name}}` and `{{today}}` are filled in here.
+   - The fixed **operating rules** in `src/prompt.ts` (read-only access, confirm-before-save forms, privacy, chat formatting). The dashboard shows these through `GET /rules`.
 
 | Tool | What the model gets |
 | --- | --- |

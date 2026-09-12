@@ -4,10 +4,7 @@ import { HttpError } from "./http.ts";
 
 const secret = new TextEncoder().encode(env.jwtSecret);
 
-/**
- * Same session JWT as the web app (apps/web/src/lib/session.ts), forwarded as
- * `Authorization: Bearer`. The assistant sees the whole business, so owners only.
- */
+// The web app's session JWT (apps/web/src/lib/session.ts); owners only, since the assistant sees the whole business.
 export async function requireAdmin(authorization: string | undefined) {
   const token = authorization?.match(/^Bearer (.+)$/i)?.[1];
   if (!token) throw new HttpError(401, "Please sign in first");

@@ -11,17 +11,13 @@ import { api } from "./client";
 export const CHATS_URL = "/api/admin/assistant/chats";
 
 type AssistantState = {
-  /** The open chat, or null for a new one (created by the server on the first answer). */
+  /** null until the server creates the chat with the first answer. */
   chatId: string | null;
   messages: AssistantMessage[];
   draft: string;
-  /** Uploaded image keys waiting to be sent with the next question. */
   attachments: string[];
-  /** When the pending question was sent (ms since epoch), or null when idle. */
   pendingSince: number | null;
-  /** Loading a chat picked from History. */
   loading: boolean;
-  /** An answer arrived that nobody has looked at yet (widget closed). */
   unread: boolean;
   /** Bumped whenever another chat is shown, so a late answer doesn't land in the wrong one. */
   view: number;
@@ -30,18 +26,12 @@ type AssistantState = {
   send: (text: string) => Promise<void>;
   newChat: () => void;
   openChat: (chatId: string) => Promise<void>;
-  /** Re-reads the open chat from the server (e.g. an answer that finished after a reload). */
   refresh: () => Promise<void>;
-  /** After a chat is deleted. */
   forget: (chatId: string) => void;
   setActionStatus: (messageId: string, index: number, status: Exclude<ActionStatus, "pending">) => Promise<void>;
   markRead: () => void;
 };
 
-/**
- * The open conversation, shared by the dashboard widget and the full Assistant page. Chats are
- * saved per user on the server; this tab remembers which one is open (sessionStorage).
- */
 export const useAssistant = create<AssistantState>()(
   persist(
     (set, get) => ({
@@ -83,7 +73,6 @@ export const useAssistant = create<AssistantState>()(
         } catch (err) {
           if (get().view !== view) return;
           toast.error((err as Error).message);
-          // Put the question (and its images) back so it can be sent again.
           set({ messages, draft: content, attachments, pendingSince: null });
         }
       },
@@ -114,7 +103,7 @@ export const useAssistant = create<AssistantState>()(
           const chat = await api<{ messages: AssistantMessage[] }>(`${CHATS_URL}/${chatId}`);
           if (get().view === view && get().chatId === chatId) set({ messages: chat.messages });
         } catch {
-          // Deleted from another tab or device: start fresh.
+          // Deleted from another tab or device.
           if (get().view === view && get().chatId === chatId) get().newChat();
         }
       },
@@ -134,7 +123,7 @@ export const useAssistant = create<AssistantState>()(
         try {
           await api(`/api/admin/assistant/messages/${messageId}`, { method: "PATCH", body: { index, status } });
         } catch (err) {
-          // The purchase/location itself is saved; only the card's state didn't stick.
+          // The purchase/location is already saved; only the card's state didn't stick, so don't revert.
           toast.error((err as Error).message);
         }
       },
@@ -144,13 +133,12 @@ export const useAssistant = create<AssistantState>()(
       name: "potatoni-assistant",
       storage: createJSONStorage(() => sessionStorage),
       partialize: ({ chatId, messages, draft, attachments }) => ({ chatId, messages, draft, attachments }),
-      // Rehydrated after mount (useAssistantSession), so server and first client render match.
+      // Rehydrated after mount (useAssistantSession) so server and first client render match.
       skipHydration: true,
     },
   ),
 );
 
-/** Restores the open chat once (then syncs it with the server), and marks answers read while visible. */
 export function useAssistantSession(visible: boolean) {
   const unread = useAssistant((s) => s.unread);
   const markRead = useAssistant((s) => s.markRead);

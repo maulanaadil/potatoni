@@ -6,12 +6,6 @@ import Image from "next/image";
 const control =
   "grid size-10 place-items-center rounded-full text-xl font-bold outline-none transition-[background-color,transform] duration-160 ease-out-strong hover:bg-navy/5 focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97] disabled:opacity-30 motion-reduce:active:scale-100 pointer-coarse:size-11";
 
-/**
- * Full-size preview of one or more images (receipts, posters) over a dimmed page.
- * Motion (animate skill → modal): centered, opacity + scale(0.96), 200ms in / 140ms out on the
- * strong ease-out; reduced motion fades only. Moving between images is instant — it's repeated
- * and often keyboard-driven (← →). Click outside, Esc or × to close.
- */
 export function ImageViewer({
   urls,
   open,
@@ -26,7 +20,8 @@ export function ImageViewer({
   onIndexChange: (index: number) => void;
 }) {
   const count = urls.length;
-  const current = urls[Math.min(index, count - 1)];
+  const position = Math.min(index, count - 1);
+  const current = urls[position];
   const step = (delta: number) => onIndexChange((index + delta + count) % count);
   if (!current) return null;
 
@@ -44,7 +39,7 @@ export function ImageViewer({
           className="fixed top-1/2 left-1/2 z-[60] flex w-[min(94vw,64rem)] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 outline-none transition-[opacity,scale] duration-200 ease-out-strong data-ending-style:duration-140 data-starting-style:opacity-0 data-ending-style:opacity-0 motion-safe:data-starting-style:scale-[0.96] motion-safe:data-ending-style:scale-[0.96]"
         >
           <Dialog.Title className="sr-only">
-            Image {Math.min(index, count - 1) + 1} of {count}
+            Image {position + 1} of {count}
           </Dialog.Title>
           <div className="relative h-[min(78dvh,52rem)] w-full">
             <Image src={current} alt="" fill sizes="94vw" className="object-contain" />
@@ -56,7 +51,7 @@ export function ImageViewer({
                   ‹
                 </button>
                 <span className="min-w-12 text-center text-sm font-bold tabular-nums">
-                  {Math.min(index, count - 1) + 1} / {count}
+                  {position + 1} / {count}
                 </span>
                 <button type="button" aria-label="Next image" onClick={() => step(1)} className={control}>
                   ›

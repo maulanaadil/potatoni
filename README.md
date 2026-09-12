@@ -9,6 +9,7 @@ _Crispy outside, happy inside._ A monolith POS + owner dashboard for the Potaton
 - **Assistant (`/dashboard/assistant`, and a launcher on every dashboard page)**: an internal AI marketer and personal assistant (Claude Haiku by default). It reads the business data read-only and answers questions about sales, best sellers, upcoming bazaars and promos.
   - Photos: send a picture of a receipt or an event poster and it fills in the purchases or the location for you to confirm. Nothing is saved until you press **Record** or **Add**.
   - History: each owner's chats are saved and can be reopened or deleted.
+  - Instructions: the assistant's role, business context and style are edited under **Assistant → Instructions**. The fixed safety rules are shown there too, read-only.
   - It runs as its own service in [`apps/ai`](apps/ai/README.md).
 
 Built for laptop, iPad (portrait and landscape) and iPhone.
@@ -162,5 +163,6 @@ All endpoints return JSON. Errors are `{ "error": "<English message>" }`.
 | POST | `/api/admin/assistant` `{ chatId?, message, imageKeys? }` → `{ chatId, messages }` (asks `apps/ai`, saves both turns) | admin |
 | GET / DELETE | `/api/admin/assistant/chats[/:id]` (your own chats only) | admin |
 | PATCH | `/api/admin/assistant/messages/:id` `{ index, status }` (a proposal was recorded or dismissed) | admin |
+| GET / PUT / DELETE | `/api/admin/assistant/instructions` (DELETE resets to the default) | admin |
 
 Order prices are always recalculated on the server from the database. The client only sends variant and modifier ids. Order items snapshot names and prices, so later menu edits never rewrite sales history.

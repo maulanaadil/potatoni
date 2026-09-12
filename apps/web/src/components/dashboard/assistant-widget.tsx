@@ -16,12 +16,6 @@ const iconButton =
 
 const scrollArea = "min-h-0 flex-1 touch-auto overflow-y-auto overscroll-contain";
 
-/**
- * The assistant on every dashboard page: a launcher in the bottom-right corner that opens a
- * floating chat panel (md+) or a bottom sheet (phones), with the owner's chat history one tap
- * away. It shares the open chat with the full Assistant page, and a question keeps running
- * while the panel is closed.
- */
 export function AssistantWidget({ name }: { name: string }) {
   const pathname = usePathname();
   const wide = useMediaQuery("(min-width: 48rem)");
@@ -51,7 +45,6 @@ export function AssistantWidget({ name }: { name: string }) {
     />
   );
 
-  // Swapping chat ↔ history fades (200ms) so the panel's content doesn't just jump.
   const content = (Scroll: ElementType, composerClass: string) =>
     showHistory ? (
       <Scroll key="history" className={cn(scrollArea, "animate-fade p-3")}>
@@ -76,7 +69,6 @@ export function AssistantWidget({ name }: { name: string }) {
         aria-label={open ? "Close the assistant" : "Ask the assistant"}
         className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex h-14 items-center gap-2 rounded-full border-2 border-navy bg-sun px-4 font-display text-lg font-extrabold text-navy shadow-[0_12px_24px_-8px_rgb(42_38_112/0.45)] outline-none transition-[transform,background-color] duration-160 ease-out-strong hover:bg-sun-deep focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97] motion-reduce:active:scale-100 md:right-6 md:bottom-6 md:pr-5 print:hidden"
       >
-        {/* Sparkle ↔ × crossfade (state indication); a 2px blur hides the double exposure. */}
         <span aria-hidden className="grid size-6 place-items-center">
           <SparkleIcon
             className={cn(
@@ -107,7 +99,6 @@ export function AssistantWidget({ name }: { name: string }) {
       </button>
 
       {wide ? (
-        // Non-modal: no scrim, the dashboard stays usable; clicking outside doesn't close it.
         <Dialog.Root open={open} onOpenChange={setOpen} modal={false} disablePointerDismissal>
           <Dialog.Portal>
             <Dialog.Popup
@@ -115,7 +106,6 @@ export function AssistantWidget({ name }: { name: string }) {
               finalFocus={launcher}
               className={cn(
                 "fixed right-6 bottom-24 z-40 flex h-[min(42rem,calc(100dvh-8rem))] w-[min(27rem,calc(100vw-3rem))] origin-bottom-right flex-col overflow-hidden rounded-3xl border-2 border-navy bg-paper text-navy shadow-[0_24px_48px_-12px_rgb(42_38_112/0.35)] outline-none print:hidden",
-                // Grows out of the launcher: opacity + scale(0.95), 200ms in / 140ms out; reduced motion fades.
                 "transition-[opacity,scale] duration-200 ease-out-strong data-ending-style:duration-140 data-starting-style:opacity-0 data-ending-style:opacity-0 motion-safe:data-starting-style:scale-95 motion-safe:data-ending-style:scale-95",
               )}
             >
@@ -125,7 +115,6 @@ export function AssistantWidget({ name }: { name: string }) {
           </Dialog.Portal>
         </Dialog.Root>
       ) : (
-        // Phones: the same swipeable sheet as every other sheet in the app.
         <Drawer.Root open={open} onOpenChange={setOpen}>
           <Drawer.VirtualKeyboardProvider>
             <Drawer.Portal>
@@ -164,7 +153,6 @@ function PanelHeader({
   dragZone: boolean;
 }) {
   return (
-    // On phones the header is the sheet's drag zone.
     <div
       className={cn(
         "flex shrink-0 items-center gap-1 border-b-2 border-navy/10 py-2 pr-2 pl-4",
@@ -208,7 +196,7 @@ function PanelHeader({
   );
 }
 
-/** Navy sparkle (the ✨ emoji is yellow and disappears on the sun-colored launcher). */
+// Not the ✨ emoji: it's yellow and disappears on the sun-colored launcher.
 function SparkleIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>

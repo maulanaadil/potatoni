@@ -4,9 +4,7 @@ import { type Query, readOnly } from "./db.ts";
 import { env } from "./env.ts";
 import { addDays, daysBetween, jakartaToday, wib } from "./time.ts";
 
-// The assistant's view of the business. Every tool is a fixed, read-only query: the model
-// picks tools and arguments, it never writes SQL. Customer names, emails and phone numbers
-// are never returned, so no personal data is sent to the model.
+// Fixed read-only queries (the model never writes SQL); customer names, emails and phones are never returned.
 
 const dayKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
 const rangeArgs = {
@@ -19,7 +17,6 @@ const rangeArgs = {
 };
 type RangeArgs = { from?: string; to?: string; location_id?: string };
 
-/** WHERE clause for a WIB date range (+ optional location); pushes its values onto `params`. */
 function rangeFilter(args: RangeArgs, params: unknown[], dateColumn: string, locationColumn: string) {
   const to = args.to ?? jakartaToday();
   const from = args.from ?? addDays(to, -29);
@@ -47,7 +44,7 @@ type LocationRow = {
   selling_days: number;
 };
 
-/** Mirrors locationStatus() in apps/web/src/lib/services/locations.ts. */
+// Keep in sync with locationStatus() in apps/web/src/lib/services/locations.ts.
 function locationStatus(l: LocationRow, today: string) {
   if (!l.starts_on) return "unscheduled";
   if (l.starts_on > today) return "upcoming";
@@ -389,15 +386,13 @@ const TOOLS = [
   }),
 ];
 
-/** A zod object as a tool's JSON input schema. */
 export function inputSchema(args: z.ZodObject) {
   const schema = z.toJSONSchema(args, { io: "input" }) as Anthropic.Beta.BetaTool.InputSchema;
   delete (schema as Record<string, unknown>).$schema;
   return schema;
 }
 
-// Web search that filters results with code (_20260209) needs Opus/Sonnet 4.6 or newer;
-// Haiku 4.5 and older models get the basic version.
+// web_search_20260209 (filters results with code) needs Opus/Sonnet 4.6+; older models get the basic version.
 const DYNAMIC_WEB_SEARCH = /^claude-(opus-(5|4-[6-9])|sonnet-(5|4-6)|fable|mythos)/.test(env.anthropicModel);
 const BANDUNG: Anthropic.Beta.BetaUserLocation = {
   type: "approximate",
@@ -407,10 +402,6 @@ const BANDUNG: Anthropic.Beta.BetaUserLocation = {
   timezone: "Asia/Jakarta",
 };
 
-/**
- * Our read-only tools (run by this service) plus Anthropic's hosted web search, for things
- * outside the database: upcoming bazaars and events in Bandung, competitor prices, trends.
- */
 export const tools: Anthropic.Beta.BetaToolUnion[] = [
   ...TOOLS.map(
     (tool): Anthropic.Beta.BetaTool => ({
@@ -424,7 +415,7 @@ export const tools: Anthropic.Beta.BetaToolUnion[] = [
     : { type: "web_search_20250305", name: "web_search", max_uses: 5, user_location: BANDUNG },
 ];
 
-/** Runs a tool the model asked for. Errors go back to the model as data so it can recover. */
+// Errors go back to the model as data so it can recover.
 export async function runTool(name: string, rawArgs: unknown): Promise<unknown> {
   const tool = TOOLS.find((t) => t.name === name);
   if (!tool) return { error: `There is no tool called ${name}` };
