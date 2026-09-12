@@ -48,7 +48,12 @@ export function AssistantChat({ name }: { name: string }) {
   const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
-    <>
+    // Fills the screen below the dashboard chrome (main's padding + the phone/tablet top bar),
+    // so the chat scrolls inside its panel with the composer always in view — not the page.
+    <div
+      data-assistant-page
+      className="flex h-[calc(100dvh-9.5rem)] min-h-[26rem] flex-col md:h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-4rem)]"
+    >
       <PageHeader
         title="Assistant"
         description="Your marketing and sales sidekick. It reads the register's data, reads photos of receipts and posters, and suggests how to sell more."
@@ -65,20 +70,24 @@ export function AssistantChat({ name }: { name: string }) {
           </>
         }
       />
-      <div className="lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start lg:gap-4">
-        <Panel className="sticky top-6 hidden p-3 lg:block">
-          <p className="px-1 pb-2 font-display text-lg font-extrabold">History</p>
-          <AssistantHistory />
+      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[17rem_minmax(0,1fr)]">
+        <Panel className="hidden min-h-0 flex-col overflow-hidden lg:flex">
+          <p className="shrink-0 px-4 pt-3 pb-2 font-display text-lg font-extrabold">History</p>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3">
+            <AssistantHistory />
+          </div>
         </Panel>
-        <Panel className="flex min-h-[60dvh] flex-col">
-          <AssistantThread name={name} className="flex-1 px-4 py-5 md:px-6" />
-          <AssistantComposer className="sticky bottom-0 rounded-b-3xl border-t-2 border-navy bg-paper p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]" />
+        <Panel className="flex min-h-0 flex-col overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <AssistantThread name={name} className="px-4 py-5 md:px-6" />
+          </div>
+          <AssistantComposer className="shrink-0 border-t-2 border-navy bg-paper p-3" />
         </Panel>
       </div>
       <Dialog open={historyOpen && !wide} onOpenChange={setHistoryOpen} title="History">
         <AssistantHistory onPick={() => setHistoryOpen(false)} />
       </Dialog>
-    </>
+    </div>
   );
 }
 
