@@ -26,6 +26,7 @@ type CartState = {
   remove: (key: string) => void;
   setCustomerName: (name: string) => void;
   clear: () => void;
+  restore: (lines: CartLine[], customerName: string) => void;
 };
 
 const lineKey = (variantId: string, modifiers: CartModifier[]) =>
@@ -59,6 +60,7 @@ export const useCart = create<CartState>()(
       remove: (key) => set((state) => ({ lines: state.lines.filter((l) => l.key !== key) })),
       setCustomerName: (customerName) => set({ customerName }),
       clear: () => set({ lines: [], customerName: "" }),
+      restore: (lines, customerName) => set({ lines, customerName }),
     }),
     { name: "potatoni-cart" },
   ),

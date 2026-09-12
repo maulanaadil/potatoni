@@ -4,10 +4,14 @@ import { logActivity } from "../activity";
 import { HttpError } from "../api";
 import { db } from "../db";
 import { formatRupiah, jakartaDateKey, startOfJakartaDay } from "../format";
+import { resolveLocationId } from "./locations";
 import type { Session } from "../session";
 import { MAX_SEASONINGS, type CreateOrderInput } from "../validators";
 
-export const orderInclude = { items: { orderBy: { id: "asc" } } } satisfies Prisma.OrderInclude;
+export const orderInclude = {
+  items: { orderBy: { id: "asc" } },
+  location: { select: { id: true, name: true } },
+} satisfies Prisma.OrderInclude;
 export type OrderWithItems = Prisma.OrderGetPayload<{ include: typeof orderInclude }>;
 
 export type ModifierSnapshot = { id: string; name: string; type: string; price: number };
@@ -71,7 +75,7 @@ async function priceItems(items: CreateOrderInput["items"]) {
 }
 
 export async function createOrder(input: CreateOrderInput, session: Session) {
-  const items = await priceItems(input.items);
+  const [items, locationId] = await Promise.all([priceItems(input.items), resolveLocationId(input.locationId)]);
   const subtotal = items.reduce((sum, i) => sum + i.lineTotal, 0);
 
   // Order codes are per-day sequences; retry if two tills grab the same number.
@@ -87,6 +91,7 @@ export async function createOrder(input: CreateOrderInput, session: Session) {
             total: subtotal,
             customerName: input.customerName,
             note: input.note,
+            locationId,
             items: { create: items },
           },
           include: orderInclude,
@@ -94,12 +99,12 @@ export async function createOrder(input: CreateOrderInput, session: Session) {
         await logActivity(
           {
             action: "order.created",
-            message: `${session.name} created order ${code} (${formatRupiah(order.total)})`,
+            message: `${session.name} created order ${code}${order.location ? ` at ${order.location.name}` : ""} (${formatRupiah(order.total)})`,
             source: "POS",
             session,
             entityType: "order",
             entityId: order.id,
-            meta: { total: order.total, items: items.length, paymentMethod: input.paymentMethod },
+            meta: { total: order.total, items: items.length, paymentMethod: input.paymentMethod, locationId },
           },
           tx,
         );
@@ -187,6 +192,8 @@ export async function listOrders(params: {
   from?: Date;
   to?: Date;
   status?: "PENDING" | "PAID" | "CANCELLED";
+  // "none" = orders without a location
+  location?: string;
   q?: string;
   take?: number;
 }) {
@@ -194,6 +201,7 @@ export async function listOrders(params: {
     where: {
       createdAt: { gte: params.from, lt: params.to },
       status: params.status,
+      ...(params.location ? { locationId: params.location === "none" ? null : params.location } : {}),
       ...(params.q
         ? {
             OR: [

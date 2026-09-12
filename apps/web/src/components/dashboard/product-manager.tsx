@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { cn } from "@/lib/cn";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { EmptyState, Panel, PriceRow } from "@/components/ui/brand";
@@ -137,7 +138,7 @@ export function ProductManager({ products: initial }: { products: MenuProduct[] 
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-display text-xl leading-tight font-extrabold">{p.name}</p>
-                  <p className="text-xs font-bold text-navy/55 uppercase">{p.category === "FRIES" ? "Fries" : "Chicken"}</p>
+                  <p className="text-xs font-bold text-navy-soft uppercase">{p.category === "FRIES" ? "Fries" : "Chicken"}</p>
                 </div>
                 <ActiveBadge active={p.isActive} />
               </div>
@@ -218,7 +219,10 @@ export function ProductManager({ products: initial }: { products: MenuProduct[] 
                         aria-label="Best seller"
                         aria-pressed={v.isPopular}
                         onClick={() => setVariant(i, { isPopular: !v.isPopular })}
-                        className={v.isPopular ? "text-2xl text-sun" : "text-2xl text-navy/20"}
+                        className={cn(
+                          "grid size-11 place-items-center rounded-lg text-2xl outline-none transition-transform duration-160 ease-out-strong focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97]",
+                          v.isPopular ? "text-sun" : "text-navy/25",
+                        )}
                       >
                         ★
                       </button>
@@ -227,7 +231,7 @@ export function ProductManager({ products: initial }: { products: MenuProduct[] 
                         aria-label="Remove size"
                         disabled={draft.variants.length === 1}
                         onClick={() => setDraft({ ...draft, variants: draft.variants.filter((_, j) => j !== i) })}
-                        className="grid size-9 place-items-center rounded-lg text-lg text-tomato hover:bg-tomato/10 disabled:opacity-30"
+                        className="grid size-11 place-items-center rounded-lg text-lg text-tomato outline-none transition-transform duration-160 ease-out-strong hover:bg-tomato/10 focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97] disabled:opacity-30"
                       >
                         ×
                       </button>

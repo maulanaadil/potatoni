@@ -70,9 +70,9 @@ export function UserManager({ users: initial, currentUserId }: { users: UserView
           >
             <div className="min-w-0">
               <p className="font-bold">
-                {u.name} {u.id === currentUserId && <span className="text-navy/50">(you)</span>}
+                {u.name} {u.id === currentUserId && <span className="text-navy-soft">(you)</span>}
               </p>
-              <p className="truncate text-xs font-semibold text-navy/55">
+              <p className="truncate text-xs font-semibold text-navy-soft">
                 {u.email} · since {formatDateTime(u.createdAt)}
               </p>
             </div>

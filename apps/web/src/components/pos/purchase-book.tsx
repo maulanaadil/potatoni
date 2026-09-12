@@ -9,6 +9,7 @@ import { Field, Input } from "@/components/ui/field";
 import { api } from "@/lib/client";
 import { formatRupiah, formatTime } from "@/lib/format";
 import type { PurchaseView } from "@/lib/views";
+import { useCurrentLocation } from "./location-context";
 
 // One tap fills the most common stock runs.
 const PRESETS = [
@@ -29,6 +30,7 @@ export function PurchaseBook({ initialPurchases }: { initialPurchases: PurchaseV
   const purchases = data?.purchases ?? [];
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
+  const { locationId, location } = useCurrentLocation();
 
   const set = (key: keyof typeof empty) => (e: { target: { value: string } }) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -39,6 +41,7 @@ export function PurchaseBook({ initialPurchases }: { initialPurchases: PurchaseV
     try {
       const { purchase } = await api<{ purchase: PurchaseView }>("/api/purchases", {
         body: {
+          locationId,
           item: form.item,
           quantity: Number(form.quantity.replace(",", ".")),
           unit: form.unit,
@@ -63,8 +66,8 @@ export function PurchaseBook({ initialPurchases }: { initialPurchases: PurchaseV
     <div className="grid gap-4 lg:grid-cols-[26rem_minmax(0,1fr)] lg:items-start">
       <Panel className="p-4 lg:sticky lg:top-24">
         <SectionTag icon="🛒">Buy stock</SectionTag>
-        <p className="mt-2 text-sm font-semibold text-navy/60">
-          Record every purchase so the owner can see today&apos;s real profit.
+        <p className="mt-2 text-sm font-semibold text-navy-soft">
+          Record every purchase so the owner can see today&apos;s real profit{location ? ` at ${location.name}` : ""}.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {PRESETS.map((p) => (
@@ -72,7 +75,7 @@ export function PurchaseBook({ initialPurchases }: { initialPurchases: PurchaseV
               key={p.item}
               type="button"
               onClick={() => setForm((f) => ({ ...f, item: p.item, unit: p.unit }))}
-              className="rounded-full border-2 border-navy/15 bg-cream px-3 py-1 text-sm font-bold transition-[border-color,transform] duration-160 ease-out-strong hover:border-navy active:scale-[0.97]"
+              className="rounded-full border-2 border-navy/15 bg-cream px-3 py-1 text-sm font-bold outline-none focus-visible:ring-4 focus-visible:ring-sun/70 pointer-coarse:min-h-11 transition-[border-color,transform] duration-160 ease-out-strong hover:border-navy active:scale-[0.97]"
             >
               {p.item}
             </button>
@@ -124,9 +127,9 @@ export function PurchaseBook({ initialPurchases }: { initialPurchases: PurchaseV
               <div key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
                   <p className="font-bold">
-                    {p.item} <span className="text-navy/55">· {p.quantity} {p.unit}</span>
+                    {p.item} <span className="text-navy-soft">· {p.quantity} {p.unit}</span>
                   </p>
-                  <p className="truncate text-xs font-semibold text-navy/55">
+                  <p className="truncate text-xs font-semibold text-navy-soft">
                     {formatTime(p.purchasedAt)}
                     {p.supplier && ` · ${p.supplier}`}
                     {p.note && ` · ${p.note}`}

@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function PurchasesPage() {
   const purchases = await db.purchase.findMany({
     where: { purchasedAt: { gte: startOfJakartaDay() } },
+    include: { location: { select: { id: true, name: true } } },
     orderBy: { purchasedAt: "desc" },
   });
   return <PurchaseBook initialPurchases={JSON.parse(JSON.stringify(purchases)) as PurchaseView[]} />;

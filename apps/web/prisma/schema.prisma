@@ -102,12 +102,15 @@ model Order {
   customerName  String?
   note          String?
   items         OrderItem[]
+  locationId    String?
+  location      Location?     @relation(fields: [locationId], references: [id], onDelete: Restrict)
   createdAt     DateTime      @default(now())
   paidAt        DateTime?
   cancelledAt   DateTime?
 
   @@index([createdAt])
   @@index([status])
+  @@index([locationId, createdAt])
 }
 
 model OrderItem {
@@ -134,10 +137,13 @@ model Purchase {
   total       Int
   supplier    String?
   note        String?
-  purchasedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
+  locationId  String?
+  location    Location? @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  purchasedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([purchasedAt])
+  @@index([locationId, purchasedAt])
 }
 
 model Activity {
@@ -153,4 +159,22 @@ model Activity {
   createdAt  DateTime       @default(now())
 
   @@index([createdAt])
+}
+
+// Where the stall is set up (e.g. "SMA Trinitas Bandung" for a month). Orders and stock
+// purchases are tagged with the location scheduled for that day, so the owner can compare spots.
+model Location {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  address   String?
+  notes     String?
+  startsOn  DateTime?  @db.Date
+  endsOn    DateTime?  @db.Date // null = until the next move
+  isActive  Boolean    @default(true)
+  orders    Order[]
+  purchases Purchase[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([startsOn])
 }

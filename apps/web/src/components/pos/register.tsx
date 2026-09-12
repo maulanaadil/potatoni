@@ -36,7 +36,7 @@ export function Register({
         <div className="flex items-end justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-extrabold leading-none md:text-4xl">New order</h1>
-            <p className="mt-1 text-sm font-semibold text-navy/60">Tap a size to add it to the order.</p>
+            <p className="mt-1 text-sm font-semibold text-navy-soft">Tap a size to add it to the order.</p>
           </div>
           <Sparkles className="hidden h-10 text-navy sm:block" />
         </div>
@@ -61,7 +61,7 @@ export function Register({
                 )}
               </div>
               {product.tagline && (
-                <p className="mt-1 text-sm font-semibold text-navy/60">{product.tagline}</p>
+                <p className="mt-1 text-sm font-semibold text-navy-soft">{product.tagline}</p>
               )}
               <div className="mt-3 flex flex-col gap-1.5">
                 {product.variants.map((variant) => (
@@ -69,7 +69,7 @@ export function Register({
                     key={variant.id}
                     type="button"
                     onClick={() => setPicking({ product, variantId: variant.id })}
-                    className="rounded-xl border-2 border-transparent px-2 py-1.5 text-left transition-[background-color,border-color,transform] duration-160 ease-out-strong hover:border-navy/15 hover:bg-cream active:scale-[0.98] active:bg-sun/40"
+                    className="rounded-xl border-2 border-transparent px-2 py-1.5 text-left outline-none focus-visible:ring-4 focus-visible:ring-sun/70 pointer-coarse:min-h-11 transition-[background-color,border-color,transform] duration-160 ease-out-strong hover:border-navy/15 hover:bg-cream active:scale-[0.98] active:bg-sun/40"
                   >
                     <PriceRow
                       size={variant.size}
@@ -136,7 +136,7 @@ function SeasoningStrip({ modifiers }: { modifiers: MenuModifier[] }) {
                 )}
               >
                 {m.name}
-                {m.price > 0 && <span className="ml-1 text-navy/55">+{formatK(m.price)}</span>}
+                {m.price > 0 && <span className="ml-1 text-navy-soft">+{formatK(m.price)}</span>}
               </li>
             ))}
           </ul>

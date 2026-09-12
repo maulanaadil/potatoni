@@ -32,7 +32,7 @@ export function Field({
     <label className={cn("flex flex-col gap-1.5", className)}>
       <span className="text-sm font-bold">{label}</span>
       {children}
-      {hint && <span className="text-xs text-navy/55">{hint}</span>}
+      {hint && <span className="text-xs text-navy-soft">{hint}</span>}
     </label>
   );
 }

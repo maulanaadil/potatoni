@@ -33,7 +33,7 @@ export function PosHeader({ name, role }: { name: string; role: "ADMIN" | "CASHI
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 font-display text-sm font-bold whitespace-nowrap transition-[background-color,color,transform] duration-160 ease-out-strong active:scale-[0.97] md:flex-none md:px-4 md:text-base",
+              "flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 font-display text-sm font-bold whitespace-nowrap outline-none transition-[background-color,color,transform] duration-160 ease-out-strong focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97] pointer-coarse:min-h-11 md:flex-none md:px-4 md:text-base",
               active ? "bg-navy text-cream" : "text-navy hover:bg-navy/5",
             )}
           >
@@ -55,7 +55,7 @@ export function PosHeader({ name, role }: { name: string; role: "ADMIN" | "CASHI
         <div className="ml-auto flex items-center gap-2">
           <div className="hidden text-right leading-tight lg:block">
             <p className="text-sm font-extrabold">{name}</p>
-            <p className="text-xs font-bold text-navy/55 uppercase">{role === "ADMIN" ? "Owner" : "Cashier"}</p>
+            <p className="text-xs font-bold text-navy-soft uppercase">{role === "ADMIN" ? "Owner" : "Cashier"}</p>
           </div>
           {role === "ADMIN" && (
             <Link href="/dashboard" className={buttonVariants({ intent: "sun", size: "sm" })}>

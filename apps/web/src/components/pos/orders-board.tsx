@@ -44,7 +44,7 @@ export function OrdersBoard({ initialOrders }: { initialOrders: OrderView[] }) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl font-extrabold leading-none md:text-4xl">Today&apos;s orders</h1>
-          <p className="mt-1 text-sm font-semibold text-navy/60">
+          <p className="mt-1 text-sm font-semibold text-navy-soft">
             {paid.length} paid · {formatRupiah(paid.reduce((s, o) => s + o.total, 0))}
             {pendingCount > 0 && ` · ${pendingCount} awaiting payment`}
           </p>
@@ -62,7 +62,7 @@ export function OrdersBoard({ initialOrders }: { initialOrders: OrderView[] }) {
             aria-pressed={filter === f.value}
             onClick={() => setFilter(f.value)}
             className={cn(
-              "shrink-0 rounded-full border-2 border-navy px-4 py-1.5 font-display text-sm font-bold transition-[background-color,color,transform] duration-160 ease-out-strong active:scale-[0.97]",
+              "shrink-0 rounded-full border-2 border-navy px-4 py-1.5 font-display text-sm font-bold outline-none focus-visible:ring-4 focus-visible:ring-sun/70 pointer-coarse:min-h-11 transition-[background-color,color,transform] duration-160 ease-out-strong active:scale-[0.97]",
               filter === f.value ? "bg-navy text-cream" : "bg-paper hover:bg-cream-deep",
             )}
           >
@@ -80,8 +80,9 @@ export function OrdersBoard({ initialOrders }: { initialOrders: OrderView[] }) {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-display text-lg leading-tight font-extrabold">{order.code}</p>
-                  <p className="text-sm font-semibold text-navy/55">
+                  <p className="text-sm font-semibold text-navy-soft">
                     {formatTime(order.createdAt)} · {order.paymentMethod === "QRIS" ? "QRIS" : "Cash"}
+                    {order.location && ` · ${order.location.name}`}
                     {order.customerName && ` · ${order.customerName}`}
                   </p>
                 </div>
@@ -93,7 +94,7 @@ export function OrdersBoard({ initialOrders }: { initialOrders: OrderView[] }) {
                     <span className="min-w-0">
                       {item.quantity}× {item.productName} {item.variantSize}
                       {item.modifiers.length > 0 && (
-                        <span className="block truncate text-xs text-navy/55">
+                        <span className="block truncate text-xs text-navy-soft">
                           {item.modifiers.map((m) => m.name).join(" · ")}
                         </span>
                       )}

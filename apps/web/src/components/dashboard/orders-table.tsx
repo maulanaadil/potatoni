@@ -12,11 +12,20 @@ import { formatDateTime, formatRupiah } from "@/lib/format";
 import type { OrderView } from "@/lib/views";
 import { ConfirmButton, PageHeader } from "./common";
 
-type Filters = { from: string; to: string; status: string; q: string };
+type Filters = { from: string; to: string; status: string; q: string; location: string };
+type LocationOption = { id: string; name: string };
 
 const toQuery = (f: Filters) => new URLSearchParams(Object.entries(f).filter(([, v]) => v)).toString();
 
-export function OrdersTable({ orders: initial, filters }: { orders: OrderView[]; filters: Filters }) {
+export function OrdersTable({
+  orders: initial,
+  filters,
+  locations,
+}: {
+  orders: OrderView[];
+  filters: Filters;
+  locations: LocationOption[];
+}) {
   const [form, setForm] = useState(filters);
   const [applied, setApplied] = useState(filters);
   const key = `/api/admin/orders?take=500&${toQuery(applied)}`;
@@ -29,6 +38,7 @@ export function OrdersTable({ orders: initial, filters }: { orders: OrderView[];
 
   const paid = orders.filter((o) => o.status === "PAID");
   const revenue = paid.reduce((s, o) => s + o.total, 0);
+  const locationName = locations.find((l) => l.id === applied.location)?.name;
 
   function applyFilters(e: FormEvent) {
     e.preventDefault();
@@ -66,11 +76,16 @@ export function OrdersTable({ orders: initial, filters }: { orders: OrderView[];
     <>
       <PageHeader
         title="Orders"
-        description={`${isValidating ? "Loading… · " : ""}${orders.length} orders · ${paid.length} paid · ${formatRupiah(revenue)} revenue`}
+        description={`${isValidating ? "Loading… · " : ""}${orders.length} orders · ${paid.length} paid · ${formatRupiah(revenue)} revenue${
+          applied.location ? ` · ${applied.location === "none" ? "no location" : (locationName ?? "one location")}` : ""
+        }`}
       />
 
       <Panel className="mb-4 p-4">
-        <form onSubmit={applyFilters} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.5fr_auto] lg:items-end">
+        <form
+          onSubmit={applyFilters}
+          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.2fr_1.4fr_auto] lg:items-end"
+        >
           <Field label="From">
             <Input type="date" value={form.from} onChange={(e) => setForm({ ...form, from: e.target.value })} />
           </Field>
@@ -83,6 +98,17 @@ export function OrdersTable({ orders: initial, filters }: { orders: OrderView[];
               <option value="PENDING">Awaiting payment</option>
               <option value="PAID">Paid</option>
               <option value="CANCELLED">Cancelled</option>
+            </Select>
+          </Field>
+          <Field label="Location">
+            <Select value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}>
+              <option value="">All locations</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+              <option value="none">No location</option>
             </Select>
           </Field>
           <Field label="Search">
@@ -107,12 +133,13 @@ export function OrdersTable({ orders: initial, filters }: { orders: OrderView[];
                 <button
                   type="button"
                   onClick={() => setSelected(o)}
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left active:bg-cream"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left outline-none focus-visible:bg-cream active:bg-cream"
                 >
                   <div className="min-w-0">
                     <p className="font-display font-extrabold">{o.code}</p>
-                    <p className="truncate text-xs font-semibold text-navy/55">
+                    <p className="truncate text-xs font-semibold text-navy-soft">
                       {formatDateTime(o.createdAt)} · {o.paymentMethod}
+                      {o.location && ` · ${o.location.name}`}
                       {o.customerName && ` · ${o.customerName}`}
                     </p>
                   </div>
@@ -129,8 +156,8 @@ export function OrdersTable({ orders: initial, filters }: { orders: OrderView[];
               <tr>
                 <th className="px-4 py-3">Order</th>
                 <th className="px-4 py-3">Time</th>
+                <th className="px-4 py-3">Location</th>
                 <th className="px-4 py-3">Items</th>
-                <th className="px-4 py-3">Method</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Total</th>
               </tr>
@@ -144,13 +171,16 @@ export function OrdersTable({ orders: initial, filters }: { orders: OrderView[];
                 >
                   <td className="px-4 py-3 font-display font-extrabold">
                     {o.code}
-                    {o.customerName && <span className="block text-xs font-semibold text-navy/55">{o.customerName}</span>}
+                    <span className="block text-xs font-semibold text-navy-soft">
+                      {o.paymentMethod === "QRIS" ? "QRIS" : "Cash"}
+                      {o.customerName && ` · ${o.customerName}`}
+                    </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">{formatDateTime(o.createdAt)}</td>
+                  <td className="px-4 py-3">{o.location?.name ?? <span className="text-navy-soft">—</span>}</td>
                   <td className="max-w-64 truncate px-4 py-3">
                     {o.items.map((i) => `${i.quantity}× ${i.productName} ${i.variantSize}`).join(", ")}
                   </td>
-                  <td className="px-4 py-3">{o.paymentMethod === "QRIS" ? "QRIS" : "Cash"}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={o.status} />
                   </td>
@@ -166,7 +196,11 @@ export function OrdersTable({ orders: initial, filters }: { orders: OrderView[];
         open={selected !== null}
         onOpenChange={(open) => !open && setSelected(null)}
         title={selected?.code ?? ""}
-        description={selected ? formatDateTime(selected.createdAt) : undefined}
+        description={
+          selected
+            ? `${formatDateTime(selected.createdAt)}${selected.location ? ` · 📍 ${selected.location.name}` : ""}`
+            : undefined
+        }
         footer={
           selected && (
             <div className="flex flex-wrap justify-end gap-2">
@@ -189,7 +223,7 @@ export function OrdersTable({ orders: initial, filters }: { orders: OrderView[];
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <StatusBadge status={selected.status} />
-              <span className="text-sm font-bold text-navy/60">
+              <span className="text-sm font-bold text-navy-soft">
                 {selected.paymentMethod === "QRIS" ? "QRIS" : "Cash"}
                 {selected.paidAt && ` · paid ${formatDateTime(selected.paidAt)}`}
               </span>
@@ -201,9 +235,9 @@ export function OrdersTable({ orders: initial, filters }: { orders: OrderView[];
                     <span className="font-bold">
                       {item.quantity}× {item.productName} {item.variantSize}
                     </span>{" "}
-                    <span className="text-navy/55">({item.variantGrams}g)</span>
+                    <span className="text-navy-soft">({item.variantGrams}g)</span>
                     {item.modifiers.length > 0 && (
-                      <span className="block text-xs text-navy/60">
+                      <span className="block text-xs text-navy-soft">
                         {item.modifiers.map((m) => `${m.name}${m.price ? ` +${m.price / 1000}K` : ""}`).join(" · ")}
                       </span>
                     )}
@@ -217,7 +251,7 @@ export function OrdersTable({ orders: initial, filters }: { orders: OrderView[];
               <span className="tabular-nums">{formatRupiah(selected.total)}</span>
             </div>
             {selected.cashReceived != null && (
-              <p className="text-sm text-navy/60">
+              <p className="text-sm text-navy-soft">
                 Cash received {formatRupiah(selected.cashReceived)} · change{" "}
                 {formatRupiah(selected.cashReceived - selected.total)}
               </p>

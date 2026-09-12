@@ -126,7 +126,7 @@ export function PaymentDialog({
             ✓
           </span>
           <p className="font-display text-2xl font-extrabold">{shown.code} is paid</p>
-          <p className="text-navy/60">
+          <p className="text-navy-soft">
             {formatRupiah(shown.total)} via {shown.paymentMethod === "QRIS" ? "QRIS" : "cash"}
           </p>
           {shown.paymentMethod === "CASH" && shown.cashReceived != null && (
@@ -134,7 +134,7 @@ export function PaymentDialog({
               Change: {formatRupiah(shown.cashReceived - shown.total)}
             </p>
           )}
-          <p className="font-display text-sm font-bold tracking-wide text-navy/50 uppercase">
+          <p className="font-display text-sm font-bold tracking-wide text-navy-soft uppercase">
             Good potato, good mood.
           </p>
         </div>
@@ -148,7 +148,7 @@ export function PaymentDialog({
                 aria-pressed={method === m}
                 onClick={() => setMethod(m)}
                 className={cn(
-                  "rounded-xl py-2 font-display font-bold transition-[background-color,color,transform] duration-160 ease-out-strong active:scale-[0.97]",
+                  "h-11 rounded-xl font-display font-bold outline-none transition-[background-color,color,transform] duration-160 ease-out-strong focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97]",
                   method === m ? "bg-navy text-cream" : "hover:bg-navy/5",
                 )}
               >
@@ -172,7 +172,7 @@ export function PaymentDialog({
                   <>
                     <p className="text-center font-display text-lg font-extrabold tracking-wide">POTATONI</p>
                     <QRCodeSVG value={qris} level="M" marginSize={1} className="h-auto w-full" title="QRIS payment code" />
-                    <p className="mt-1 text-center text-[11px] font-bold text-navy/50">NMID ID1026581364258 · A01</p>
+                    <p className="mt-1 text-center text-[11px] font-bold text-navy-soft">NMID ID1026581364258 · A01</p>
                   </>
                 )}
               </div>
@@ -239,7 +239,7 @@ export function PaymentDialog({
                   <span>
                     {item.quantity}× {item.productName} {item.variantSize}
                     {item.modifiers.length > 0 && (
-                      <span className="text-navy/55"> · {item.modifiers.map((m) => m.name).join(", ")}</span>
+                      <span className="text-navy-soft"> · {item.modifiers.map((m) => m.name).join(", ")}</span>
                     )}
                   </span>
                   <span className="font-bold tabular-nums">{formatRupiah(item.lineTotal)}</span>

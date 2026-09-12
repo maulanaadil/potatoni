@@ -12,7 +12,7 @@ import { MAX_SEASONINGS } from "@/lib/validators";
 import { QuantityStepper } from "./quantity-stepper";
 
 const tile =
-  "relative flex flex-col items-center gap-1 rounded-2xl border-2 p-2 text-center transition-[background-color,border-color,transform,opacity] duration-160 ease-out-strong active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100";
+  "relative flex flex-col items-center gap-1 rounded-2xl border-2 p-2 text-center outline-none transition-[background-color,border-color,transform,opacity] duration-160 ease-out-strong focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100";
 
 export function ProductOptionsDialog({
   product,
@@ -85,6 +85,7 @@ export function ProductOptionsDialog({
 
   return (
     <Dialog
+      instant
       open={product !== null}
       onOpenChange={(open) => !open && onClose()}
       title={shown?.name ?? ""}
@@ -114,7 +115,7 @@ export function ProductOptionsDialog({
                 )}
               >
                 <span className="font-display text-3xl leading-none font-extrabold">{v.size}</span>
-                <span className="text-xs font-bold text-navy/60">{v.grams}g</span>
+                <span className="text-xs font-bold text-navy-soft">{v.grams}g</span>
                 <span className="font-display text-lg font-extrabold">{formatK(v.price)}</span>
                 {v.isPopular && <span className="absolute top-1 right-2 text-sun">★</span>}
               </button>
@@ -190,7 +191,7 @@ function OptionGroup({ title, hint, children }: { title: string; hint?: string; 
     <section>
       <div className="mb-2 flex items-baseline justify-between">
         <h3 className="font-display text-lg font-extrabold uppercase">{title}</h3>
-        {hint && <span className="text-sm font-bold text-navy/55">{hint}</span>}
+        {hint && <span className="text-sm font-bold text-navy-soft">{hint}</span>}
       </div>
       {children}
     </section>
@@ -226,7 +227,7 @@ function ImageTile({
         )}
       </span>
       <span className="text-sm leading-tight font-extrabold">{label}</span>
-      {price ? <span className="text-xs font-bold text-navy/60">+{formatK(price)}</span> : null}
+      {price ? <span className="text-xs font-bold text-navy-soft">+{formatK(price)}</span> : null}
       {selected && (
         <span className="absolute top-1.5 right-1.5 grid size-5 place-items-center rounded-full bg-navy text-[11px] text-cream">
           ✓

@@ -128,7 +128,7 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
     <div className="flex flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-navy/30 px-6 py-12 text-center">
       <Sparkles className="h-8 text-navy/40" />
       <p className="font-display text-lg font-bold">{title}</p>
-      {children && <p className="max-w-sm text-sm text-navy/60">{children}</p>}
+      {children && <p className="max-w-sm text-sm text-navy-soft">{children}</p>}
     </div>
   );
 }
@@ -136,7 +136,7 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
 const STATUS_STYLES = {
   PENDING: "bg-sun text-navy",
   PAID: "bg-leaf text-paper",
-  CANCELLED: "bg-navy/10 text-navy/60 line-through",
+  CANCELLED: "bg-navy/10 text-navy-soft line-through",
 } as const;
 const STATUS_LABELS = { PENDING: "Awaiting payment", PAID: "Paid", CANCELLED: "Cancelled" } as const;
 

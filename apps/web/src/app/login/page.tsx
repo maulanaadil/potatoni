@@ -15,12 +15,12 @@ export default function LoginPage() {
         <Logo priority className="h-auto w-72 animate-rise motion-reduce:animate-none" />
         <div className="w-full animate-rise rounded-3xl border-2 border-navy bg-paper p-6 [animation-delay:60ms] motion-reduce:animate-none">
           <h1 className="font-display text-2xl font-extrabold">Sign in</h1>
-          <p className="mb-5 text-sm font-semibold text-navy/60">Cashiers go to the register, owners to the dashboard.</p>
+          <p className="mb-5 text-sm font-semibold text-navy-soft">Cashiers go to the register, owners to the dashboard.</p>
           <Suspense>
             <LoginForm />
           </Suspense>
         </div>
-        <p className="animate-rise font-display text-sm font-bold tracking-wide text-navy/50 uppercase [animation-delay:120ms] motion-reduce:animate-none">
+        <p className="animate-rise font-display text-sm font-bold tracking-wide text-navy-soft uppercase [animation-delay:120ms] motion-reduce:animate-none">
           Good potato, good mood.
         </p>
       </div>

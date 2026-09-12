@@ -6,12 +6,14 @@ import useSWR from "swr";
 import { EmptyState, Panel } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Field, Input } from "@/components/ui/field";
+import { Field, Input, Select } from "@/components/ui/field";
 import { api } from "@/lib/client";
 import { formatDateTime, formatRupiah, jakartaDateKey } from "@/lib/format";
 import type { PurchaseView } from "@/lib/views";
 import { ConfirmButton, PageHeader } from "./common";
 
+type Filters = { from: string; to: string; location: string };
+type LocationOption = { id: string; name: string; isActive: boolean };
 type Draft = {
   id?: string;
   item: string;
@@ -21,35 +23,48 @@ type Draft = {
   supplier: string;
   note: string;
   date: string;
+  locationId: string; // "" = no location
 };
 
-const blank = (): Draft => ({
-  item: "",
-  quantity: "",
-  unit: "kg",
-  total: "",
-  supplier: "",
-  note: "",
-  date: jakartaDateKey(),
-});
+const toQuery = (f: Filters) => new URLSearchParams(Object.entries(f).filter(([, v]) => v)).toString();
 
-export function PurchaseTable({ purchases: initial, range }: { purchases: PurchaseView[]; range: { from: string; to: string } }) {
-  const [filters, setFilters] = useState(range);
-  const [applied, setApplied] = useState(range);
-  const isInitial = applied.from === range.from && applied.to === range.to;
-  const { data, mutate } = useSWR<{ purchases: PurchaseView[] }>(
-    `/api/purchases?${new URLSearchParams(applied)}`,
-    { fallbackData: isInitial ? { purchases: initial } : undefined },
-  );
+export function PurchaseTable({
+  purchases: initial,
+  filters,
+  locations,
+  scheduledId,
+}: {
+  purchases: PurchaseView[];
+  filters: Filters;
+  locations: LocationOption[];
+  scheduledId: string | null;
+}) {
+  const [form, setForm] = useState(filters);
+  const [applied, setApplied] = useState(filters);
+  const isInitial = toQuery(applied) === toQuery(filters);
+  const { data, mutate } = useSWR<{ purchases: PurchaseView[] }>(`/api/purchases?${toQuery(applied)}`, {
+    fallbackData: isInitial ? { purchases: initial } : undefined,
+  });
   const purchases = data?.purchases ?? [];
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const total = purchases.reduce((s, p) => s + p.total, 0);
 
+  const blank = (): Draft => ({
+    item: "",
+    quantity: "",
+    unit: "kg",
+    total: "",
+    supplier: "",
+    note: "",
+    date: jakartaDateKey(),
+    locationId: scheduledId ?? "",
+  });
+
   function apply(e: FormEvent) {
     e.preventDefault();
-    setApplied(filters);
-    window.history.replaceState(null, "", `/dashboard/purchases?${new URLSearchParams(filters)}`);
+    setApplied(form);
+    window.history.replaceState(null, "", `/dashboard/purchases?${toQuery(form)}`);
   }
 
   async function save() {
@@ -65,6 +80,7 @@ export function PurchaseTable({ purchases: initial, range }: { purchases: Purcha
           total: Number(draft.total.replace(/\D/g, "")),
           supplier: draft.supplier,
           note: draft.note,
+          locationId: draft.locationId || null,
           // Noon WIB keeps the purchase on the chosen calendar day.
           purchasedAt: new Date(`${draft.date}T12:00:00+07:00`).toISOString(),
         },
@@ -102,19 +118,30 @@ export function PurchaseTable({ purchases: initial, range }: { purchases: Purcha
         }
       />
       <Panel className="mb-4 p-4">
-        <form onSubmit={apply} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+        <form onSubmit={apply} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.4fr_auto] lg:items-end">
           <Field label="From">
-            <Input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
+            <Input type="date" value={form.from} onChange={(e) => setForm({ ...form, from: e.target.value })} />
           </Field>
           <Field label="To">
-            <Input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} />
+            <Input type="date" value={form.to} onChange={(e) => setForm({ ...form, to: e.target.value })} />
+          </Field>
+          <Field label="Location">
+            <Select value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}>
+              <option value="">All locations</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+              <option value="none">No location</option>
+            </Select>
           </Field>
           <Button type="submit">Apply</Button>
         </form>
       </Panel>
 
       {purchases.length === 0 ? (
-        <EmptyState title="No purchases in this range" />
+        <EmptyState title="No purchases match these filters" />
       ) : (
         <Panel className="divide-y-2 divide-navy/10 overflow-hidden">
           {purchases.map((p) => (
@@ -131,16 +158,18 @@ export function PurchaseTable({ purchases: initial, range }: { purchases: Purcha
                   supplier: p.supplier ?? "",
                   note: p.note ?? "",
                   date: jakartaDateKey(new Date(p.purchasedAt)),
+                  locationId: p.location?.id ?? "",
                 })
               }
-              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-cream"
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left outline-none transition-colors duration-150 hover:bg-cream focus-visible:bg-cream"
             >
               <div className="min-w-0">
                 <p className="font-bold">
-                  {p.item} <span className="text-navy/55">· {p.quantity} {p.unit}</span>
+                  {p.item} <span className="text-navy-soft">· {p.quantity} {p.unit}</span>
                 </p>
-                <p className="truncate text-xs font-semibold text-navy/55">
+                <p className="truncate text-xs font-semibold text-navy-soft">
                   {formatDateTime(p.purchasedAt)}
+                  {p.location && ` · 📍 ${p.location.name}`}
                   {p.supplier && ` · ${p.supplier}`}
                   {p.note && ` · ${p.note}`}
                 </p>
@@ -184,6 +213,18 @@ export function PurchaseTable({ purchases: initial, range }: { purchases: Purcha
             </Field>
             <Field label="Date">
               <Input type="date" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} />
+            </Field>
+            <Field label="Location" className="sm:col-span-2">
+              <Select value={draft.locationId} onChange={(e) => setDraft({ ...draft, locationId: e.target.value })}>
+                <option value="">No location</option>
+                {locations
+                  .filter((l) => l.isActive || l.id === draft.locationId)
+                  .map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+              </Select>
             </Field>
             <Field label="Supplier">
               <Input value={draft.supplier} onChange={(e) => setDraft({ ...draft, supplier: e.target.value })} maxLength={80} />

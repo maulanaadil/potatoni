@@ -50,3 +50,14 @@ export function startOfJakartaDay(date: Date = new Date(), offsetDays = 0) {
 export function mediaUrl(key: string | null | undefined) {
   return key ? `/api/media/${key}` : null;
 }
+
+/** "2026-09-13" → "13 Sep 2026" (calendar day, no timezone shift). */
+export function formatDay(key: string | null | undefined, withYear = true) {
+  if (!key) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    ...(withYear ? { year: "numeric" } : {}),
+    timeZone: "UTC",
+  }).format(new Date(`${key}T00:00:00Z`));
+}

@@ -1,6 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import type { PoolConfig } from "pg";
-import { PrismaClient } from "@/generated/prisma/client";
+import { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 // The remote pooler (or the network in between) can drop a connection while a query is
 // in flight; pg then fails that query with "Connection terminated unexpectedly".
@@ -50,6 +50,24 @@ export function createClient(pool: PoolConfig = { connectionString: process.env.
 type Db = ReturnType<typeof createClient>;
 const globalForPrisma = globalThis as unknown as { prisma?: Db };
 
+/**
+ * After `prisma generate` adds a model, hot reload re-runs this file but the client cached
+ * on globalThis is still the old one (→ "Cannot read properties of undefined (reading
+ * 'findMany')"). Only reuse the cache if it knows every model the current schema has.
+ */
+export function isCurrentClient(client: unknown) {
+  if (!client) return false;
+  return Object.values(Prisma.ModelName).every(
+    (model) => (client as Record<string, unknown>)[model.charAt(0).toLowerCase() + model.slice(1)] !== undefined,
+  );
+}
+
+const cached = globalForPrisma.prisma;
+if (cached && !isCurrentClient(cached)) {
+  console.warn("[db] Prisma schema changed since the dev server started — creating a fresh client");
+  void cached.$disconnect().catch(() => {});
+}
+
 // Reuse one client across hot reloads in dev.
-export const db = globalForPrisma.prisma ?? createClient();
+export const db = cached && isCurrentClient(cached) ? cached : createClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;

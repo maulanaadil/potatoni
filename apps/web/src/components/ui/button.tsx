@@ -22,7 +22,7 @@ export const buttonVariants = cva(
         success: "border-navy bg-leaf text-paper hover:bg-leaf/90",
       },
       size: {
-        sm: "h-9 px-3 text-sm",
+        sm: "h-9 px-3 text-sm pointer-coarse:h-11",
         md: "h-11 px-4 text-base",
         lg: "h-14 px-6 text-lg",
         icon: "size-11 text-lg",

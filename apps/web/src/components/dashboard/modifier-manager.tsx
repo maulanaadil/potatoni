@@ -106,7 +106,7 @@ export function ModifierManager({ modifiers: initial }: { modifiers: MenuModifie
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <SectionTag icon={g.icon}>{g.title}</SectionTag>
-                  <p className="mt-1 text-sm font-semibold text-navy/55">{g.hint}</p>
+                  <p className="mt-1 text-sm font-semibold text-navy-soft">{g.hint}</p>
                 </div>
                 <Button intent="outline" size="sm" onClick={() => open(g.type)}>
                   + Add
@@ -126,7 +126,7 @@ export function ModifierManager({ modifiers: initial }: { modifiers: MenuModifie
                       )}
                     </span>
                     <span className="font-display leading-tight font-extrabold">{m.name}</span>
-                    <span className="text-xs font-bold text-navy/55">
+                    <span className="text-xs font-bold text-navy-soft">
                       {m.price ? `+${formatK(m.price)}` : "Free"}
                       {m.appliesTo && ` · ${m.appliesTo === "FRIES" ? "Fries only" : "Chicken only"}`}
                     </span>

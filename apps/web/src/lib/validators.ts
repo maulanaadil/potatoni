@@ -25,6 +25,8 @@ export const orderItemInput = z.object({
 export const createOrderInput = z.object({
   items: z.array(orderItemInput).min(1, "The cart is empty").max(40),
   paymentMethod: z.enum(["QRIS", "CASH"]),
+  // Omitted = today's scheduled location; null = explicitly none.
+  locationId: z.string().min(1).nullable().optional(),
   customerName: optionalText(60),
   note: optionalText(200),
 });
@@ -76,6 +78,7 @@ export const purchaseInput = z.object({
   supplier: optionalText(80),
   note: optionalText(200),
   purchasedAt: z.coerce.date().optional(),
+  locationId: z.string().min(1).nullable().optional(),
 });
 
 export const userInput = z.object({
@@ -89,3 +92,26 @@ export type CreateOrderInput = z.infer<typeof createOrderInput>;
 export type ProductInput = z.infer<typeof productInput>;
 export type ModifierInput = z.infer<typeof modifierInput>;
 export type PurchaseInput = z.infer<typeof purchaseInput>;
+
+const optionalDay = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use a valid date")
+  .nullable()
+  .optional()
+  .transform((v) => (v ? new Date(`${v}T00:00:00Z`) : null));
+
+export const locationInput = z
+  .object({
+    name: z.string().trim().min(1, "Name is required").max(80),
+    address: optionalText(160),
+    notes: optionalText(300),
+    startsOn: optionalDay,
+    endsOn: optionalDay,
+    isActive: z.boolean().default(true),
+  })
+  .refine((l) => !l.startsOn || !l.endsOn || l.endsOn >= l.startsOn, {
+    message: "End date can't be before the start date",
+    path: ["endsOn"],
+  });
+
+export type LocationInput = z.infer<typeof locationInput>;

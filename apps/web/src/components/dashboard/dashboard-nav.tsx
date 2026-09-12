@@ -12,6 +12,7 @@ const LINKS = [
   { href: "/dashboard/orders", label: "Orders", icon: "🧾" },
   { href: "/dashboard/products", label: "Products", icon: "🍟" },
   { href: "/dashboard/modifiers", label: "Seasonings & add-ons", icon: "🧂" },
+  { href: "/dashboard/locations", label: "Locations", icon: "📍" },
   { href: "/dashboard/purchases", label: "Purchases", icon: "🛒" },
   { href: "/dashboard/activity", label: "Activity", icon: "⚡" },
   { href: "/dashboard/users", label: "Team", icon: "👥" },
@@ -30,7 +31,7 @@ export function DashboardNav({ name }: { name: string }) {
 
   const linkClass = (active: boolean) =>
     cn(
-      "flex items-center gap-2.5 rounded-xl px-3 py-2 font-display font-bold whitespace-nowrap transition-[background-color,color,transform] duration-160 ease-out-strong active:scale-[0.97]",
+      "flex items-center gap-2.5 rounded-xl px-3 py-2 font-display font-bold whitespace-nowrap outline-none transition-[background-color,color,transform] duration-160 ease-out-strong focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97] pointer-coarse:min-h-11",
       active ? "bg-navy text-cream" : "text-navy hover:bg-navy/5",
     );
 
@@ -55,7 +56,7 @@ export function DashboardNav({ name }: { name: string }) {
           </Link>
           <div className="flex items-center justify-between gap-2 px-1">
             <span className="truncate text-sm font-extrabold">{name}</span>
-            <button type="button" onClick={signOut} className="text-sm font-bold text-navy/60 hover:text-navy">
+            <button type="button" onClick={signOut} className="text-sm font-bold text-navy-soft hover:text-navy">
               Sign out
             </button>
           </div>

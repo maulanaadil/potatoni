@@ -37,13 +37,13 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { paylo
   );
 }
 
-export function SalesChart({ series }: { series: DashboardStats["series"] }) {
+export function SalesChart({ series, caption }: { series: DashboardStats["series"]; caption?: string }) {
   return (
     <figure>
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <figcaption>
           <h2 className="font-display text-xl font-extrabold">Sales vs stock purchases</h2>
-          <p className="text-sm font-semibold text-navy/60">Last {series.length} days, rupiah per day</p>
+          <p className="text-sm font-semibold text-navy-soft">{caption ?? `Last ${series.length} days, rupiah per day`}</p>
         </figcaption>
         {/* Legend: always present for 2 series; swatch carries identity, text stays ink */}
         <ul className="flex gap-4 text-sm font-bold">
@@ -100,7 +100,7 @@ export function SalesChart({ series }: { series: DashboardStats["series"] }) {
         <summary className="cursor-pointer font-bold text-navy/70 hover:text-navy">Show as table</summary>
         <div className="mt-2 overflow-x-auto">
           <table className="w-full text-left tabular-nums">
-            <thead className="text-xs uppercase text-navy/60">
+            <thead className="text-xs uppercase text-navy-soft">
               <tr>
                 <th className="py-1 pr-4">Day</th>
                 <th className="py-1 pr-4 text-right">Orders</th>

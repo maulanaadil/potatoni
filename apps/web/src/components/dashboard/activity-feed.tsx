@@ -23,6 +23,7 @@ const ACTION_ICON: Record<string, string> = {
   order: "🧾",
   purchase: "🛒",
   product: "🍟",
+  location: "📍",
   modifier: "🧂",
   user: "👤",
   auth: "🔑",
@@ -40,6 +41,7 @@ const ACTIONS = [
   { value: "purchase.", label: "Purchases" },
   { value: "product.", label: "Products" },
   { value: "modifier.", label: "Add-ons" },
+  { value: "location.", label: "Locations" },
   { value: "auth.", label: "Sign-ins" },
 ];
 
@@ -70,7 +72,7 @@ export function ActivityFeed({ initial, initialCursor }: { initial: ActivityView
 
   const chip = (active: boolean) =>
     cn(
-      "shrink-0 rounded-full border-2 border-navy px-3 py-1 font-display text-sm font-bold transition-[background-color,color,transform] duration-160 ease-out-strong active:scale-[0.97]",
+      "shrink-0 rounded-full border-2 border-navy px-3 py-1 font-display text-sm font-bold outline-none focus-visible:ring-4 focus-visible:ring-sun/70 pointer-coarse:min-h-11 transition-[background-color,color,transform] duration-160 ease-out-strong active:scale-[0.97]",
       active ? "bg-navy text-cream" : "bg-paper hover:bg-cream-deep",
     );
 
@@ -111,7 +113,7 @@ export function ActivityFeed({ initial, initialCursor }: { initial: ActivityView
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">{a.message}</p>
-                <p className="text-xs font-bold text-navy/50">
+                <p className="text-xs font-bold text-navy-soft">
                   {formatDateTime(a.createdAt)} · {a.actor?.name ?? "Deleted user"}
                 </p>
               </div>

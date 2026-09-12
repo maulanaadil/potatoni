@@ -12,10 +12,17 @@ import { cartCount, cartTotal, useCart } from "@/lib/cart";
 import { api } from "@/lib/client";
 import { formatRupiah } from "@/lib/format";
 import type { OrderView } from "@/lib/views";
+import { useCurrentLocation } from "./location-context";
 import { PaymentDialog } from "./payment-dialog";
 import { QuantityStepper } from "./quantity-stepper";
 
 const rupiahFormat = { style: "currency", currency: "IDR", maximumFractionDigits: 0 } as const;
+// The total changes on every add, so the roll stays inside the 200ms UI budget (default is 900ms).
+const numberTiming = {
+  transformTiming: { duration: 200, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
+  spinTiming: { duration: 200, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
+  opacityTiming: { duration: 150, easing: "ease-out" },
+} as const;
 
 // The cart lives in localStorage; render it only after hydration to avoid a mismatch.
 function useHydrated() {
@@ -28,7 +35,8 @@ function useHydrated() {
 
 export function CartPanel({ className }: { className?: string }) {
   const hydrated = useHydrated();
-  const { lines, customerName, setCustomerName, setQuantity, clear } = useCart();
+  const { lines, customerName, setCustomerName, setQuantity, clear, restore } = useCart();
+  const { locationId } = useCurrentLocation();
   const [paymentMethod, setPaymentMethod] = useState<"QRIS" | "CASH">("QRIS");
   const [submitting, setSubmitting] = useState(false);
   const [order, setOrder] = useState<OrderView | null>(null);
@@ -42,6 +50,8 @@ export function CartPanel({ className }: { className?: string }) {
       const { order } = await api<{ order: OrderView }>("/api/orders", {
         body: {
           paymentMethod,
+          // Send what the location bar shows, so the cashier always sees where the sale lands.
+          locationId,
           customerName: customerName || undefined,
           items: lines.map((l) => ({
             variantId: l.variantId,
@@ -65,8 +75,13 @@ export function CartPanel({ className }: { className?: string }) {
         {visibleLines.length > 0 && (
           <button
             type="button"
-            onClick={clear}
-            className="rounded-lg px-2 py-1 text-sm font-bold text-tomato transition-colors duration-150 hover:bg-tomato/10"
+            onClick={() => {
+              const snapshot = { lines, customerName };
+              clear();
+              // One tap wipes the whole order, so make it forgiving.
+              toast("Order cleared", { action: { label: "Undo", onClick: () => restore(snapshot.lines, snapshot.customerName) } });
+            }}
+            className="h-11 rounded-lg px-3 text-sm font-bold text-tomato outline-none transition-colors duration-150 hover:bg-tomato/10 focus-visible:ring-4 focus-visible:ring-sun/70"
           >
             Clear
           </button>
@@ -76,23 +91,23 @@ export function CartPanel({ className }: { className?: string }) {
       <div className="max-h-[45dvh] flex-1 overflow-y-auto overscroll-contain px-4 lg:max-h-[calc(100dvh-26rem)]">
         {visibleLines.length === 0 ? (
           <div className="flex flex-col items-center gap-1 py-10 text-center">
-            <Sparkles className="h-8 text-navy/30" />
+            <Sparkles className="h-8 text-navy-soft/50" />
             <p className="font-display text-lg font-bold">Nothing here yet</p>
-            <p className="text-sm text-navy/55">Pick a size from the menu to start.</p>
+            <p className="text-sm text-navy-soft">Pick a size from the menu to start.</p>
           </div>
         ) : (
           <ul className="divide-y-2 divide-dotted divide-navy/15">
             {visibleLines.map((line) => (
               <li
                 key={line.key}
-                className="flex items-center gap-3 py-3 transition-[opacity,translate] duration-200 ease-out-strong starting:translate-y-1 starting:opacity-0 motion-reduce:starting:translate-y-0"
+                className="flex items-center gap-3 py-3"
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-display text-base leading-tight font-extrabold">
-                    {line.productName} <span className="text-navy/60">{line.size}</span>
+                    {line.productName} <span className="text-navy-soft">{line.size}</span>
                   </p>
                   {line.modifiers.length > 0 && (
-                    <p className="truncate text-xs font-semibold text-navy/55">
+                    <p className="truncate text-xs font-semibold text-navy-soft">
                       {line.modifiers.map((m) => m.name).join(" · ")}
                     </p>
                   )}
@@ -121,7 +136,7 @@ export function CartPanel({ className }: { className?: string }) {
               aria-checked={paymentMethod === method}
               onClick={() => setPaymentMethod(method)}
               className={cn(
-                "rounded-xl py-2 font-display font-bold transition-[background-color,color,transform] duration-160 ease-out-strong active:scale-[0.97]",
+                "h-11 rounded-xl font-display font-bold outline-none transition-[background-color,color,transform] duration-160 ease-out-strong focus-visible:ring-4 focus-visible:ring-sun/70 active:scale-[0.97]",
                 paymentMethod === method ? "bg-navy text-cream" : "hover:bg-navy/5",
               )}
             >
@@ -135,6 +150,7 @@ export function CartPanel({ className }: { className?: string }) {
             value={total}
             locales="id-ID"
             format={rupiahFormat}
+            {...numberTiming}
             className="font-display text-3xl font-extrabold tabular-nums"
           />
         </div>
@@ -180,13 +196,13 @@ export function CartDrawer() {
             </span>
             {count === 0 ? "Cart is empty" : "View order"}
           </span>
-          <NumberFlow value={total} locales="id-ID" format={rupiahFormat} className="tabular-nums" />
+          <NumberFlow value={total} locales="id-ID" format={rupiahFormat} {...numberTiming} className="tabular-nums" />
         </Drawer.Trigger>
       </div>
       <Drawer.Portal>
         <Drawer.Backdrop className="fixed inset-0 z-40 bg-navy opacity-[calc(0.4*(1-var(--drawer-swipe-progress)))] transition-opacity duration-[450ms] ease-drawer data-swiping:duration-0 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)]" />
         <Drawer.Viewport className="fixed inset-0 z-50 flex items-end justify-center">
-          <Drawer.Popup className="-mb-12 w-full max-w-2xl overflow-hidden rounded-t-3xl border-2 border-b-0 border-navy bg-paper pb-12 outline-none [transform:translateY(var(--drawer-swipe-movement-y))] transition-transform duration-[450ms] ease-drawer data-swiping:select-none data-starting-style:[transform:translateY(calc(100%-3rem+2px))] data-ending-style:[transform:translateY(calc(100%-3rem+2px))] data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] motion-reduce:transition-opacity">
+          <Drawer.Popup className="-mb-12 w-full max-w-2xl overflow-hidden rounded-t-3xl border-2 border-b-0 border-navy bg-paper pb-12 outline-none [transform:translateY(var(--drawer-swipe-movement-y))] transition-transform duration-[450ms] ease-drawer data-swiping:select-none data-starting-style:[transform:translateY(calc(100%-3rem+2px))] data-ending-style:[transform:translateY(calc(100%-3rem+2px))] data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] motion-reduce:transition-opacity motion-reduce:duration-200 motion-reduce:data-starting-style:opacity-0 motion-reduce:data-ending-style:opacity-0 motion-reduce:data-starting-style:[transform:none] motion-reduce:data-ending-style:[transform:none]">
             <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-navy/20" />
             <Drawer.Title className="sr-only">Current order</Drawer.Title>
             <Drawer.Content>

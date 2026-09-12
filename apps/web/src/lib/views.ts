@@ -14,6 +14,7 @@ export type OrderView = {
   createdAt: string;
   paidAt: string | null;
   cancelledAt: string | null;
+  location: { id: string; name: string } | null;
   items: {
     id: string;
     productName: string;
@@ -39,4 +40,5 @@ export type PurchaseView = {
   supplier: string | null;
   note: string | null;
   purchasedAt: string;
+  location: { id: string; name: string } | null;
 };

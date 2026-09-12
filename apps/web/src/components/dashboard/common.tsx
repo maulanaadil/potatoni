@@ -21,7 +21,7 @@ export function PageHeader({
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
         <h1 className="font-display text-3xl leading-none font-extrabold md:text-4xl">{title}</h1>
-        {description && <p className="mt-1.5 text-sm font-semibold text-navy/60">{description}</p>}
+        {description && <p className="mt-1.5 text-sm font-semibold text-navy-soft">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>
@@ -102,7 +102,7 @@ export function ImageUpload({
       <div
         className={cn(
           "relative grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl border-2 border-dashed border-navy/30 bg-cream",
-          uploading && "animate-pulse",
+          uploading && "animate-pulse motion-reduce:animate-none",
         )}
       >
         {value ? (
@@ -137,7 +137,7 @@ export function ActiveBadge({ active }: { active: boolean }) {
     <span
       className={cn(
         "rounded-full px-2 py-0.5 text-xs font-extrabold uppercase",
-        active ? "bg-leaf/15 text-leaf" : "bg-navy/10 text-navy/50",
+        active ? "bg-leaf/15 text-leaf" : "bg-navy/10 text-navy-soft",
       )}
     >
       {active ? "On menu" : "Hidden"}
