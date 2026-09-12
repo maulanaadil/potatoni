@@ -16,6 +16,16 @@ const chatInput = z.object({
       z.object({
         role: z.enum(["user", "assistant"]),
         content: z.string().trim().min(1).max(8000),
+        // Photos/screenshots (receipts, posters), base64 — the web app sends them for the new question only.
+        images: z
+          .array(
+            z.object({
+              media_type: z.enum(["image/png", "image/jpeg", "image/webp"]),
+              data: z.string().min(1).max(7_000_000),
+            }),
+          )
+          .max(3)
+          .optional(),
       }),
     )
     .min(1, "Ask something first")
@@ -38,7 +48,8 @@ app.use("/chat", async (c, next) => {
 
 app.post(
   "/chat",
-  bodyLimit({ maxSize: 256 * 1024, onError: (c) => c.json({ error: "Request is too large" }, 413) }),
+  // Room for up to three base64 images (≤5 MB each) plus the text history.
+  bodyLimit({ maxSize: 24 * 1024 * 1024, onError: (c) => c.json({ error: "Request is too large" }, 413) }),
   async (c) => {
     const body = await c.req.json().catch(() => {
       throw new HttpError(400, "Request body must be JSON");

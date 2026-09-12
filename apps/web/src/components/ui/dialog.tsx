@@ -99,7 +99,7 @@ export const sheetPopupClass = cn(
   "motion-reduce:transition-opacity motion-reduce:duration-200 motion-reduce:data-starting-style:opacity-0 motion-reduce:data-ending-style:opacity-0 motion-reduce:data-starting-style:[transform:none] motion-reduce:data-ending-style:[transform:none]",
 );
 
-const sheetSlide =
+export const sheetSlide =
   "transition-transform duration-[450ms] ease-drawer data-starting-style:[transform:translateY(calc(100%-3rem+2px))] data-ending-style:[transform:translateY(calc(100%-3rem+2px))] data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)]";
 // Instant: fade in place, but a swipe still carries the sheet down and out.
 const sheetInstant =

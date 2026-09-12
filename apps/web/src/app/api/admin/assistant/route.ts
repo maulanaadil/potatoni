@@ -1,32 +1,15 @@
 import { NextResponse } from "next/server";
-import { HttpError, handler, parseBody, requireApiSession } from "@/lib/api";
+import { handler, parseBody, requireApiSession } from "@/lib/api";
 import { getSessionToken } from "@/lib/auth";
+import { askAssistant } from "@/lib/services/assistant";
 import { assistantInput } from "@/lib/validators";
 
-// Answers can take several tool rounds plus a web search (~1.5 min for the long ones).
-const TIMEOUT_MS = 180_000;
-
-/** Proxies the dashboard chat to the assistant service (apps/ai), which re-checks the JWT. */
+/** Asks the assistant in one of the signed-in owner's chats (a new one when chatId is empty). */
 export const POST = handler(async (request) => {
-  await requireApiSession("ADMIN");
-  const body = await parseBody(request, assistantInput);
-  const token = await getSessionToken();
-
-  const res = await fetch(`${process.env.AI_SERVICE_URL ?? "http://localhost:4000"}/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  }).catch((err: unknown) => {
-    if (err instanceof Error && err.name === "TimeoutError") {
-      throw new HttpError(504, "The assistant took too long to answer — please try again");
-    }
-    throw new HttpError(503, "The assistant service isn't running (apps/ai)");
-  });
-
-  const data = (await res.json().catch(() => ({ error: "The assistant sent an invalid answer" }))) as Record<
-    string,
-    unknown
-  >;
-  return NextResponse.json(data, { status: res.status });
+  const session = await requireApiSession("ADMIN");
+  const { chatId, message, imageKeys } = await parseBody(request, assistantInput);
+  const token = (await getSessionToken()) ?? "";
+  return NextResponse.json(
+    await askAssistant({ userId: session.sub, token, chatId: chatId ?? null, message, imageKeys }),
+  );
 });

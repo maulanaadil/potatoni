@@ -1,6 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { type Query, readOnly } from "./db.ts";
+import { env } from "./env.ts";
 import { addDays, daysBetween, jakartaToday, wib } from "./time.ts";
 
 // The assistant's view of the business. Every tool is a fixed, read-only query: the model
@@ -388,28 +389,39 @@ const TOOLS = [
   }),
 ];
 
+/** A zod object as a tool's JSON input schema. */
+export function inputSchema(args: z.ZodObject) {
+  const schema = z.toJSONSchema(args, { io: "input" }) as Anthropic.Beta.BetaTool.InputSchema;
+  delete (schema as Record<string, unknown>).$schema;
+  return schema;
+}
+
+// Web search that filters results with code (_20260209) needs Opus/Sonnet 4.6 or newer;
+// Haiku 4.5 and older models get the basic version.
+const DYNAMIC_WEB_SEARCH = /^claude-(opus-(5|4-[6-9])|sonnet-(5|4-6)|fable|mythos)/.test(env.anthropicModel);
+const BANDUNG: Anthropic.Beta.BetaUserLocation = {
+  type: "approximate",
+  city: "Bandung",
+  region: "West Java",
+  country: "ID",
+  timezone: "Asia/Jakarta",
+};
+
 /**
  * Our read-only tools (run by this service) plus Anthropic's hosted web search, for things
  * outside the database: upcoming bazaars and events in Bandung, competitor prices, trends.
  */
 export const tools: Anthropic.Beta.BetaToolUnion[] = [
-  ...TOOLS.map((tool): Anthropic.Beta.BetaTool => {
-    const schema = z.toJSONSchema(tool.args, { io: "input" }) as Anthropic.Beta.BetaTool.InputSchema;
-    delete (schema as Record<string, unknown>).$schema;
-    return { name: tool.name, description: tool.description, input_schema: schema };
-  }),
-  {
-    type: "web_search_20260209",
-    name: "web_search",
-    max_uses: 5,
-    user_location: {
-      type: "approximate",
-      city: "Bandung",
-      region: "West Java",
-      country: "ID",
-      timezone: "Asia/Jakarta",
-    },
-  },
+  ...TOOLS.map(
+    (tool): Anthropic.Beta.BetaTool => ({
+      name: tool.name,
+      description: tool.description,
+      input_schema: inputSchema(tool.args),
+    }),
+  ),
+  DYNAMIC_WEB_SEARCH
+    ? { type: "web_search_20260209", name: "web_search", max_uses: 5, user_location: BANDUNG }
+    : { type: "web_search_20250305", name: "web_search", max_uses: 5, user_location: BANDUNG },
 ];
 
 /** Runs a tool the model asked for. Errors go back to the model as data so it can recover. */

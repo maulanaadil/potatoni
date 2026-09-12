@@ -9,5 +9,5 @@ export const env = {
   databaseUrl: required("DATABASE_URL"),
   jwtSecret: required("JWT_SECRET"),
   anthropicApiKey: required("ANTHROPIC_API_KEY"),
-  anthropicModel: process.env.ANTHROPIC_MODEL || "claude-opus-5",
+  anthropicModel: process.env.ANTHROPIC_MODEL || "claude-haiku-4-5",
 };
