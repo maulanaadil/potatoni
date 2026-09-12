@@ -1,0 +1,76 @@
+name: Deploy
+
+# Production deploys go through here, not Vercel's Git integration (disabled in
+# apps/web/vercel.json), so nothing ships unless CI passed on that exact commit.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  # Manual redeploy of main (e.g. after rotating an env var in Vercel).
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One production deploy at a time. A newer merge waits instead of cancelling a deploy
+# halfway through.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  production:
+    name: Production
+    # Only merges to main in this repo, after CI passed. PR runs and forks never reach
+    # the Vercel token.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      VERCEL_TELEMETRY_DISABLED: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+      TURBO_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The commit CI tested, even if main has moved on since.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      # The project sets ENABLE_EXPERIMENTAL_COREPACK=1, so `vercel build` shells out to
+      # corepack, which Node 25+ (.nvmrc) no longer bundles.
+      - name: Install Vercel CLI and corepack
+        run: npm install --global vercel@59.16.0 corepack@0.36.0
+
+      # Project settings plus production env vars (DATABASE_URL, S3, SMTP…) from Vercel,
+      # so the build sees the same config as a Vercel-side build.
+      - name: Pull production settings
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed $url" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
