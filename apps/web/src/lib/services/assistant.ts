@@ -83,6 +83,14 @@ async function callAssistantService(path: string, token: string, body?: unknown)
       : new HttpError(503, "The assistant service isn't running (apps/ai)");
   });
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  // The owner is signed in here, so a 401/403 from apps/ai means the two apps disagree on JWT_SECRET;
+  // passing it through would tell the owner to sign in again and bounce them to /login.
+  if (res.status === 401 || res.status === 403) {
+    throw new HttpError(
+      502,
+      "The assistant service couldn't verify the dashboard — JWT_SECRET must match on both apps",
+    );
+  }
   if (!res.ok) {
     throw new HttpError(res.status, typeof data.error === "string" ? data.error : "The assistant service failed");
   }
