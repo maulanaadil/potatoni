@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import { type PaymentMethod, Prisma } from "@/generated/prisma/client";
 import { logActivity } from "../activity";
 import { HttpError } from "../api";
@@ -18,12 +19,9 @@ export type OrderWithItems = Prisma.OrderGetPayload<{ include: typeof orderInclu
 
 export type ModifierSnapshot = { id: string; name: string; type: string; price: number };
 
-// Continues from today's highest number, not the count, so deleted orders don't make it reuse a code.
-async function nextOrderCode(tx: Pick<typeof db, "order">) {
-  const prefix = `PTN-${jakartaDateKey().slice(2).replaceAll("-", "")}-`;
-  const today = await tx.order.findMany({ where: { code: { startsWith: prefix } }, select: { code: true } });
-  const last = Math.max(0, ...today.map((o) => Number(o.code.slice(prefix.length)) || 0));
-  return `${prefix}${String(last + 1).padStart(3, "0")}`;
+function newOrderCode() {
+  const day = jakartaDateKey().slice(2).replaceAll("-", "");
+  return `PTN-${day}-${randomUUID().slice(0, 8).toUpperCase()}`;
 }
 
 /** Prices are always recomputed from the database — the client only sends ids. */
@@ -82,11 +80,11 @@ export async function createOrder(input: CreateOrderInput, session: Session) {
   const [items, locationId] = await Promise.all([priceItems(input.items), resolveLocationId(input.locationId)]);
   const subtotal = items.reduce((sum, i) => sum + i.lineTotal, 0);
 
-  // Order codes are per-day sequences; retry if two tills grab the same number.
+  // Codes are random, so a clash is near impossible; retry with a fresh one if it happens.
   for (let attempt = 0; ; attempt++) {
     try {
       return await db.$transaction(async (tx) => {
-        const code = await nextOrderCode(tx);
+        const code = newOrderCode();
         // Checked inside the transaction; Order.voucherClaimId is unique, so two tills
         // can't spend the same voucher at once.
         const voucher = input.voucherCode ? await evaluateVoucher(input.voucherCode, subtotal, tx) : null;
