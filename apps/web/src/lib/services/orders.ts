@@ -3,7 +3,7 @@ import { type PaymentMethod, Prisma } from "@/generated/prisma/client";
 import { logActivity } from "../activity";
 import { HttpError } from "../api";
 import { db } from "../db";
-import { formatRupiah, jakartaDateKey, startOfJakartaDay } from "../format";
+import { formatRupiah, jakartaDateKey } from "../format";
 import type { Session } from "../session";
 import { type CreateOrderInput, MAX_SEASONINGS } from "../validators";
 import { resolveLocationId } from "./locations";
@@ -18,10 +18,12 @@ export type OrderWithItems = Prisma.OrderGetPayload<{ include: typeof orderInclu
 
 export type ModifierSnapshot = { id: string; name: string; type: string; price: number };
 
+// Continues from today's highest number, not the count, so deleted orders don't make it reuse a code.
 async function nextOrderCode(tx: Pick<typeof db, "order">) {
-  const count = await tx.order.count({ where: { createdAt: { gte: startOfJakartaDay() } } });
-  const day = jakartaDateKey().slice(2).replaceAll("-", "");
-  return `PTN-${day}-${String(count + 1).padStart(3, "0")}`;
+  const prefix = `PTN-${jakartaDateKey().slice(2).replaceAll("-", "")}-`;
+  const today = await tx.order.findMany({ where: { code: { startsWith: prefix } }, select: { code: true } });
+  const last = Math.max(0, ...today.map((o) => Number(o.code.slice(prefix.length)) || 0));
+  return `${prefix}${String(last + 1).padStart(3, "0")}`;
 }
 
 /** Prices are always recomputed from the database — the client only sends ids. */
