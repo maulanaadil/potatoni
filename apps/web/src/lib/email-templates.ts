@@ -35,7 +35,7 @@ const button = (href: string, label: string) =>
 export function inviteEmail(p: {
   name?: string | null;
   inviterName: string;
-  role: "ADMIN" | "CASHIER";
+  role: "ADMIN" | "CASHIER" | "KITCHEN";
   link: string;
   expiresAt: Date;
 }) {

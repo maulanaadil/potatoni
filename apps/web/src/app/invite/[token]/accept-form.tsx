@@ -16,7 +16,7 @@ export function AcceptInviteForm({
   token: string;
   defaultName: string;
   email: string;
-  role: "ADMIN" | "CASHIER";
+  role: "ADMIN" | "CASHIER" | "KITCHEN";
 }) {
   const router = useRouter();
   const [name, setName] = useState(defaultName);

@@ -5,12 +5,12 @@ import { HttpError } from "../api";
 import { db } from "../db";
 import { sendMail } from "../email";
 import { inviteEmail } from "../email-templates";
-import type { Session } from "../session";
+import type { Role, Session } from "../session";
 import { hashToken, newToken } from "../tokens";
 
 const INVITE_DAYS = 7;
 const RESEND_COOLDOWN_MS = 60_000;
-const roleLabel = (role: "ADMIN" | "CASHIER") => (role === "ADMIN" ? "owner" : "cashier");
+const roleLabel = (role: Role) => (role === "ADMIN" ? "owner" : role === "KITCHEN" ? "kitchen" : "cashier");
 
 const openInvite = { acceptedAt: null, revokedAt: null } as const;
 
@@ -23,7 +23,7 @@ export async function listOpenInvites() {
 }
 
 async function deliver(
-  invite: { email: string; name: string | null; role: "ADMIN" | "CASHIER" },
+  invite: { email: string; name: string | null; role: Role },
   token: string,
   inviterName: string,
   baseUrl: string,
@@ -42,7 +42,7 @@ async function deliver(
 }
 
 export async function createInvite(
-  input: { email: string; name: string | null; role: "ADMIN" | "CASHIER" },
+  input: { email: string; name: string | null; role: Role },
   session: Session,
   baseUrl: string,
 ) {

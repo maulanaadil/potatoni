@@ -15,11 +15,12 @@ export class HttpError extends Error {
   }
 }
 
-export async function requireApiSession(role?: Role): Promise<Session> {
+export async function requireApiSession(role?: Role | Role[]): Promise<Session> {
   const session = await getSession();
   if (!session) throw new HttpError(401, "Please sign in first");
-  if (role === "ADMIN" && session.role !== "ADMIN") {
-    throw new HttpError(403, "Admins only");
+  const allowed = role ? [role].flat() : null;
+  if (allowed && !allowed.includes(session.role)) {
+    throw new HttpError(403, allowed.join() === "ADMIN" ? "Admins only" : "You don't have access to this");
   }
   return session;
 }

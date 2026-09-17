@@ -11,7 +11,7 @@ const purchaseInclude = { location: { select: { id: true, name: true } } } as co
 // Cashiers see today's stock purchases; admins can pass ?from=&to= (YYYY-MM-DD, WIB)
 // and ?location=<id>|none.
 export const GET = handler(async (request) => {
-  const session = await requireApiSession();
+  const session = await requireApiSession(["ADMIN", "CASHIER"]);
   const url = new URL(request.url);
   const isAdmin = session.role === "ADMIN";
   const from =
@@ -37,7 +37,7 @@ export const GET = handler(async (request) => {
 });
 
 export const POST = handler(async (request) => {
-  const session = await requireApiSession();
+  const session = await requireApiSession(["ADMIN", "CASHIER"]);
   const { locationId: requested, ...input } = await parseBody(request, purchaseInput);
   const locationId = await resolveLocationId(requested);
   const purchase = await db.purchase.create({ data: { ...input, locationId }, include: purchaseInclude });

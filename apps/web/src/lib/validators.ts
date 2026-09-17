@@ -86,7 +86,7 @@ export const userInput = z.object({
   name: z.string().trim().min(1, "Name is required").max(60),
   email: z.email("Invalid email address").trim().toLowerCase(),
   password: z.string().min(8, "Password must be at least 8 characters").optional(),
-  role: z.enum(["ADMIN", "CASHIER"]),
+  role: z.enum(["ADMIN", "CASHIER", "KITCHEN"]),
 });
 
 export type CreateOrderInput = z.infer<typeof createOrderInput>;
@@ -135,7 +135,7 @@ const phoneInput = z
 export const inviteInput = z.object({
   email: z.email("Invalid email address").trim().toLowerCase(),
   name: optionalText(60),
-  role: z.enum(["ADMIN", "CASHIER"]),
+  role: z.enum(["ADMIN", "CASHIER", "KITCHEN"]),
 });
 
 export const acceptInviteInput = z.object({
@@ -211,4 +211,9 @@ export const assistantInstructionsInput = z.object({
 export const assistantActionInput = z.object({
   index: z.number().int().min(0).max(4),
   status: z.enum(["done", "dismissed"]),
+});
+
+export const pushDeviceInput = z.object({
+  token: z.string().min(20, "Invalid device token").max(4096),
+  label: z.string().max(120).optional(),
 });

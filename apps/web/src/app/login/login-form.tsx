@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { api } from "@/lib/client";
+import type { Role } from "@/lib/session";
+
+const HOME: Record<Role, string> = { ADMIN: "/dashboard", CASHIER: "/", KITCHEN: "/kitchen" };
 
 export function LoginForm() {
   const router = useRouter();
@@ -18,12 +21,12 @@ export function LoginForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { user } = await api<{ user: { role: "ADMIN" | "CASHIER"; name: string } }>("/api/auth/login", {
+      const { user } = await api<{ user: { role: Role; name: string } }>("/api/auth/login", {
         body: { email, password },
       });
       toast.success(`Welcome back, ${user.name}!`);
       const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : null;
-      router.replace(safeNext ?? (user.role === "ADMIN" ? "/dashboard" : "/"));
+      router.replace(safeNext ?? HOME[user.role]);
       router.refresh();
     } catch (err) {
       toast.error((err as Error).message);

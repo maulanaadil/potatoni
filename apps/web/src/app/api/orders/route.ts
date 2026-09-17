@@ -17,7 +17,7 @@ export const GET = handler(async (request) => {
 });
 
 export const POST = handler(async (request) => {
-  const session = await requireApiSession();
+  const session = await requireApiSession(["ADMIN", "CASHIER"]);
   const input = await parseBody(request, createOrderInput);
   const order = await createOrder(input, session);
   return NextResponse.json({ order }, { status: 201 });

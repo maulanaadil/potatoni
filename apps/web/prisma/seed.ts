@@ -100,6 +100,22 @@ async function main() {
     });
   }
 
+  // Optional kitchen-screen account for testing.
+  const kitchenEmail = process.env.KITCHEN_EMAIL?.toLowerCase();
+  const kitchenPassword = process.env.KITCHEN_PASSWORD;
+  if (kitchenEmail && kitchenPassword) {
+    await db.user.upsert({
+      where: { email: kitchenEmail },
+      update: {},
+      create: {
+        email: kitchenEmail,
+        name: process.env.KITCHEN_NAME ?? "Kitchen Potatoni",
+        role: "KITCHEN",
+        passwordHash: await bcrypt.hash(kitchenPassword, 12),
+      },
+    });
+  }
+
   for (const [index, p] of products.entries()) {
     const { variants, ...data } = p;
     const product = await db.product.upsert({

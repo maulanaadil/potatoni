@@ -6,7 +6,7 @@ import { payOrderInput } from "@/lib/validators";
 type Ctx = { params: Promise<{ id: string }> };
 
 export const POST = handler(async (request, { params }: Ctx) => {
-  const session = await requireApiSession();
+  const session = await requireApiSession(["ADMIN", "CASHIER"]);
   const { id } = await params;
   const input = await parseBody(request, payOrderInput);
   const order = await payOrder(id, input, session);

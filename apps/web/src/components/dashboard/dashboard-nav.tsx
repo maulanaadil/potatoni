@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { PushAlerts } from "@/components/push-alerts";
 import { Logo } from "@/components/ui/brand";
 import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/client";
@@ -54,6 +55,7 @@ export function DashboardNav({ name }: { name: string }) {
           ))}
         </nav>
         <div className="mt-auto flex flex-col gap-2">
+          <PushAlerts />
           <Link href="/" className={buttonVariants({ intent: "sun" })}>
             Open register
           </Link>
@@ -73,6 +75,7 @@ export function DashboardNav({ name }: { name: string }) {
             <Logo priority className="h-10 w-auto" />
           </Link>
           <div className="ml-auto flex items-center gap-2">
+            <PushAlerts />
             <Link href="/" className={buttonVariants({ intent: "sun", size: "sm" })}>
               Register
             </Link>
