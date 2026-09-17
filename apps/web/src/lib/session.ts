@@ -5,7 +5,8 @@ import { jwtVerify, SignJWT } from "jose";
 export const SESSION_COOKIE = "potatoni_session";
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // a cashier device stays signed in for a month
 
-export type Role = "ADMIN" | "CASHIER";
+export type Role = "ADMIN" | "CASHIER" | "KITCHEN";
+const ROLES: Role[] = ["ADMIN", "CASHIER", "KITCHEN"];
 export type Session = { sub: string; name: string; email: string; role: Role };
 
 function secret() {
@@ -32,7 +33,7 @@ export async function verifySession(token: string | undefined): Promise<Session 
       sub: payload.sub,
       name: String(payload.name),
       email: String(payload.email),
-      role: payload.role === "ADMIN" ? "ADMIN" : "CASHIER",
+      role: ROLES.includes(payload.role as Role) ? (payload.role as Role) : "CASHIER",
     };
   } catch {
     return null;

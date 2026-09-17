@@ -21,9 +21,10 @@ export async function getSession(): Promise<Session | null> {
 }
 
 /** For server components/pages: bounce to login when the role doesn't fit. */
-export async function requirePageSession(role?: Role) {
+export async function requirePageSession(role?: Role | Role[]) {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (role === "ADMIN" && session.role !== "ADMIN") redirect("/");
+  const allowed = role ? [role].flat() : null;
+  if (allowed && !allowed.includes(session.role)) redirect(session.role === "KITCHEN" ? "/kitchen" : "/");
   return session;
 }

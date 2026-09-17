@@ -9,25 +9,28 @@ import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
 import { api } from "@/lib/client";
 import { formatDateTime } from "@/lib/format";
+import type { Role } from "@/lib/session";
 import { ConfirmButton, PageHeader } from "./common";
 
-export type UserView = { id: string; name: string; email: string; role: "ADMIN" | "CASHIER"; createdAt: string };
+export type UserView = { id: string; name: string; email: string; role: Role; createdAt: string };
 export type InviteView = {
   id: string;
   email: string;
   name: string | null;
-  role: "ADMIN" | "CASHIER";
+  role: Role;
   expiresAt: string;
   lastSentAt: string;
   invitedBy: { name: string } | null;
 };
-type EditDraft = { id: string; name: string; email: string; role: "ADMIN" | "CASHIER"; password: string };
-type InviteDraft = { email: string; name: string; role: "ADMIN" | "CASHIER" };
+type EditDraft = { id: string; name: string; email: string; role: Role; password: string };
+type InviteDraft = { email: string; name: string; role: Role };
 
-const roleBadge = (role: "ADMIN" | "CASHIER") =>
-  role === "ADMIN"
-    ? "rounded-full bg-navy px-2.5 py-0.5 text-xs font-extrabold text-cream uppercase"
-    : "rounded-full bg-sun px-2.5 py-0.5 text-xs font-extrabold uppercase";
+const ROLE_BADGE: Record<Role, string> = {
+  ADMIN: "rounded-full bg-navy px-2.5 py-0.5 text-xs font-extrabold text-cream uppercase",
+  CASHIER: "rounded-full bg-sun px-2.5 py-0.5 text-xs font-extrabold uppercase",
+  KITCHEN: "rounded-full bg-leaf px-2.5 py-0.5 text-xs font-extrabold text-paper uppercase",
+};
+const ROLE_NAME: Record<Role, string> = { ADMIN: "Owner", CASHIER: "Cashier", KITCHEN: "Kitchen" };
 
 export function UserManager({
   users: initialUsers,
@@ -167,7 +170,7 @@ export function UserManager({
                 {u.email} · since {formatDateTime(u.createdAt)}
               </p>
             </div>
-            <span className={roleBadge(u.role)}>{u.role === "ADMIN" ? "Owner" : "Cashier"}</span>
+            <span className={ROLE_BADGE[u.role]}>{ROLE_NAME[u.role]}</span>
           </button>
         ))}
       </Panel>
@@ -190,7 +193,7 @@ export function UserManager({
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className={roleBadge(i.role)}>{i.role === "ADMIN" ? "Owner" : "Cashier"}</span>
+                <span className={ROLE_BADGE[i.role]}>{ROLE_NAME[i.role]}</span>
                 <Button size="sm" intent="outline" onClick={() => resend(i)}>
                   Resend
                 </Button>
@@ -240,6 +243,7 @@ export function UserManager({
                 onChange={(e) => setInvite({ ...invite, role: e.target.value as InviteDraft["role"] })}
               >
                 <option value="CASHIER">Cashier (register only)</option>
+                <option value="KITCHEN">Kitchen (new orders only)</option>
                 <option value="ADMIN">Owner (register + dashboard)</option>
               </Select>
             </Field>
@@ -275,6 +279,7 @@ export function UserManager({
                 onChange={(e) => setEdit({ ...edit, role: e.target.value as EditDraft["role"] })}
               >
                 <option value="CASHIER">Cashier</option>
+                <option value="KITCHEN">Kitchen</option>
                 <option value="ADMIN">Owner (admin)</option>
               </Select>
             </Field>

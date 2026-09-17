@@ -5,6 +5,7 @@ _Crispy outside, happy inside._ A monolith POS + owner dashboard for the Potaton
 - **Register (`/`)**: cashiers sell from the menu board (size → cut → 2 free seasonings → add-ons) and charge by QRIS or cash.
 - **Orders (`/orders`)**: today's orders, with payment for any that are still pending.
 - **Purchases (`/purchases`)**: record stock buys (potatoes, oil, chicken…) so the owner sees real profit.
+- **Kitchen (`/kitchen`)**: the kitchen screen. Nothing but paid orders waiting to be cooked, with sizes, seasonings and notes, ticked off as each one leaves the fryer.
 - **Dashboard (`/dashboard`)**: owner-only overview (sales vs purchases), orders, products, seasonings & add-ons, purchases, the full activity log, and team accounts.
 - **Assistant (`/dashboard/assistant`, and a launcher on every dashboard page)**: an internal AI marketer and personal assistant (Claude Haiku by default). It reads the business data read-only and answers questions about sales, best sellers, upcoming bazaars and promos.
   - Photos: send a picture of a receipt or an event poster and it fills in the purchases or the location for you to confirm. Nothing is saved until you press **Record** or **Add**.
@@ -27,6 +28,38 @@ Built for laptop, iPad (portrait and landscape) and iPhone.
 | Image editing | `react-easy-crop` in `ImageEditor`: crop, aspect presets, zoom, rotate, straighten, flip, brightness/contrast/saturation, exported in the browser as WebP (max 1600px) before upload |
 | Charts | Recharts, with a palette checked by the dataviz validator |
 | AI assistant | `apps/ai`: Hono service, Claude (Anthropic SDK) tool use, read-only SQL tools |
+| Notifications | Firebase Cloud Messaging web push, sent from `firebase-admin` and drawn by `public/sw.js` |
+
+## Roles
+
+| Role | Sees |
+| --- | --- |
+| **Owner** (`ADMIN`) | everything: register, orders, purchases, kitchen and the dashboard |
+| **Cashier** (`CASHIER`) | register, orders and purchases |
+| **Kitchen** (`KITCHEN`) | only `/kitchen`; every other page bounces back there (`src/proxy.ts`) |
+
+Roles live on the JWT, so the gate in `src/proxy.ts` (pages) and `requireApiSession` (API routes) both read the same value. Kitchen accounts can read today's orders but can't create, pay for or cancel one.
+
+## Notifications
+
+When a cashier confirms a payment (QRIS or cash), `payOrder` sends two push notifications with Next's `after()`, so the register never waits for them:
+
+- **Owner and cashier:** `PTN-… paid · Rp 25.000 · QRIS · Bazaar name`.
+- **Kitchen:** what to cook — every line with quantity, size and seasonings, plus the order note.
+
+Setup:
+
+1. Firebase console → new project → add a **Web app**, and copy the config into `NEXT_PUBLIC_FIREBASE_*`.
+2. **Cloud Messaging → Web configuration → Generate key pair** → `NEXT_PUBLIC_FIREBASE_VAPID_KEY`.
+3. **Service accounts → Generate new private key** → `FIREBASE_CLIENT_EMAIL` and `FIREBASE_PRIVATE_KEY` from the JSON.
+
+Notes:
+
+- Each device turns alerts on itself ("🔔 Turn on alerts" in the header); the token is stored per user in `PushDevice` and dead tokens are dropped when Firebase rejects them.
+- Messages are **data-only**, so `public/sw.js` decides how the notification looks and a device never shows a duplicate.
+- The service worker only registers in production builds, so push does not work with `next dev`. Use `next build && next start`.
+- iPhone needs the app installed to the Home Screen first (iOS 16.4+). Android and desktop Chrome work in a normal tab.
+- Without the Firebase variables the app runs exactly as before, just without notifications.
 
 ## Payments: one QRIS, no gateway
 

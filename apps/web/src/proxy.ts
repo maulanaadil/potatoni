@@ -19,6 +19,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(login);
   }
 
+  // The kitchen screen is the whole app for that role: no register, no dashboard.
+  if (session.role === "KITCHEN" && !pathname.startsWith("/kitchen")) {
+    return NextResponse.redirect(new URL("/kitchen", request.url));
+  }
+
+  if (pathname.startsWith("/kitchen") && session.role === "CASHIER") {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
   if (pathname.startsWith("/dashboard") && session.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/", request.url));
   }

@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   ADMIN
   CASHIER
+  KITCHEN
 }
 
 enum Category {
@@ -52,17 +53,18 @@ enum ClaimStatus {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  name         String
-  email        String     @unique
-  passwordHash String
-  role            Role       @default(ADMIN)
+  id              String          @id @default(cuid())
+  name            String
+  email           String          @unique
+  passwordHash    String
+  role            Role            @default(ADMIN)
   emailVerifiedAt DateTime?
   activities      Activity[]
-  invitesSent     Invite[]   @relation("InvitesSent")
+  invitesSent     Invite[]        @relation("InvitesSent")
   assistantChats  AssistantChat[]
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  pushDevices     PushDevice[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 }
 
 model Product {
@@ -107,24 +109,24 @@ model Modifier {
 }
 
 model Order {
-  id            String        @id @default(cuid())
-  code          String        @unique
-  status        OrderStatus   @default(PENDING)
-  paymentMethod PaymentMethod @default(QRIS)
-  subtotal      Int
-  total         Int
-  cashReceived  Int?
-  customerName  String?
-  note          String?
-  items         OrderItem[]
-  locationId    String?
-  location      Location?     @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  id             String        @id @default(cuid())
+  code           String        @unique
+  status         OrderStatus   @default(PENDING)
+  paymentMethod  PaymentMethod @default(QRIS)
+  subtotal       Int
+  total          Int
+  cashReceived   Int?
+  customerName   String?
+  note           String?
+  items          OrderItem[]
+  locationId     String?
+  location       Location?     @relation(fields: [locationId], references: [id], onDelete: Restrict)
   discount       Int           @default(0)
   voucherClaimId String?       @unique
   voucherClaim   VoucherClaim? @relation(fields: [voucherClaimId], references: [id], onDelete: SetNull)
-  createdAt     DateTime      @default(now())
-  paidAt        DateTime?
-  cancelledAt   DateTime?
+  createdAt      DateTime      @default(now())
+  paidAt         DateTime?
+  cancelledAt    DateTime?
 
   @@index([createdAt])
   @@index([status])
@@ -148,7 +150,7 @@ model OrderItem {
 }
 
 model Purchase {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   item        String
   quantity    Float
   unit        String
@@ -314,4 +316,17 @@ model AssistantSettings {
   instructions String
   updatedBy    String?
   updatedAt    DateTime @updatedAt
+}
+
+// One row per browser/device that agreed to push notifications (Firebase Cloud Messaging).
+model PushDevice {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String   @unique // FCM registration token
+  label      String? // e.g. "iPhone · Safari", shown to the owner
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
 }

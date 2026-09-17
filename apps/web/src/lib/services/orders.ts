@@ -1,5 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { after } from "next/server";
 import { type PaymentMethod, Prisma } from "@/generated/prisma/client";
 import { logActivity } from "../activity";
 import { HttpError } from "../api";
@@ -8,6 +9,7 @@ import { formatRupiah, jakartaDateKey } from "../format";
 import type { Session } from "../session";
 import { type CreateOrderInput, MAX_SEASONINGS } from "../validators";
 import { resolveLocationId } from "./locations";
+import { notifyOrderPaid } from "./notifications";
 import { evaluateVoucher } from "./vouchers";
 
 export const orderInclude = {
@@ -138,7 +140,7 @@ export async function payOrder(
   session: Session,
   source: "POS" | "DASHBOARD" = "POS",
 ) {
-  return db.$transaction(async (tx) => {
+  const paid = await db.$transaction(async (tx) => {
     const order = await tx.order.findUniqueOrThrow({ where: { id } });
     if (order.status !== "PENDING") throw new HttpError(409, "This order has already been processed");
 
@@ -178,6 +180,10 @@ export async function payOrder(
     );
     return updated;
   });
+
+  // Runs after the cashier already has their response.
+  after(() => notifyOrderPaid(paid));
+  return paid;
 }
 
 export async function cancelOrder(id: string, session: Session, source: "POS" | "DASHBOARD") {

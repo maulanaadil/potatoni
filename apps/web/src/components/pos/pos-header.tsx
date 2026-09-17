@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { PushAlerts } from "@/components/push-alerts";
 import { Logo } from "@/components/ui/brand";
 import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/client";
 import { cn } from "@/lib/cn";
+import type { Role } from "@/lib/session";
 
 const NAV = [
   { href: "/", label: "Register", icon: "🍟" },
@@ -13,7 +15,7 @@ const NAV = [
   { href: "/purchases", label: "Purchases", icon: "🛒" },
 ];
 
-export function PosHeader({ name, role }: { name: string; role: "ADMIN" | "CASHIER" }) {
+export function PosHeader({ name, role }: { name: string; role: Role }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -57,6 +59,7 @@ export function PosHeader({ name, role }: { name: string; role: "ADMIN" | "CASHI
             <p className="text-sm font-extrabold">{name}</p>
             <p className="text-xs font-bold text-navy-soft uppercase">{role === "ADMIN" ? "Owner" : "Cashier"}</p>
           </div>
+          <PushAlerts />
           {role === "ADMIN" && (
             <Link href="/dashboard" className={buttonVariants({ intent: "sun", size: "sm" })}>
               Dashboard
