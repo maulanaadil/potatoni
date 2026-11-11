@@ -1,6 +1,40 @@
+<div align="center">
+
+<img src="apps/web/src/app/opengraph-image.jpg" alt="Potatoni: crispy outside, happy inside" width="720" />
+
 # Potatoni
 
-_Crispy outside, happy inside._ A monolith POS + owner dashboard for the Potatoni fries & chicken-bites stall.
+**The point of sale, kitchen screen and owner dashboard for a fries & chicken-bites stall, with an AI assistant built in.**
+
+[![CI](https://github.com/maulanaadil/potatoni/actions/workflows/ci.yml/badge.svg)](https://github.com/maulanaadil/potatoni/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)
+![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma_7-4169E1?logo=postgresql&logoColor=white)
+![Claude](https://img.shields.io/badge/AI-Claude-D97757?logo=anthropic&logoColor=white)
+
+[Live app](https://potatoni.aallatif.my.id) (staff login) · [Features](#features) · [How it works](#how-it-works) · [Getting started](#getting-started) · [License](#license)
+
+</div>
+
+## Overview
+
+Potatoni is a real food stall that sells fries and chicken bites at bazaars and events. This repository is the software that runs it day to day. It is a single app that three people use differently:
+
+- **The cashier** takes orders on an iPad or iPhone and charges by QRIS or cash.
+- **The kitchen** sees only paid orders, what to cook, and ticks them off.
+- **The owner** follows sales, stock costs, vouchers and locations from a dashboard, and can ask an AI assistant about the business.
+
+It is built around how the stall works, not around a generic POS:
+
+- **The menu flow matches the menu board:** size → cut → two free seasonings → add-ons.
+- **QRIS payments need no gateway.** The stall's printed QRIS is turned into a QRIS with the amount embedded for every order, so there are no gateway fees.
+- **Profit is real profit.** Stock purchases (potatoes, oil, chicken) are recorded next to sales.
+- **Sales are tracked per location,** so the owner can see whether a bazaar was worth the fee.
+- **Vouchers are a marketing channel.** Customers claim them from a QR poster on their own phone, and the cashier redeems them at the register.
+- **It installs as an app (PWA)** on phones, tablets and laptops, with push notifications when an order is paid.
+
+## Features
 
 - **Register (`/`)**: cashiers sell from the menu board (size → cut → 2 free seasonings → add-ons) and charge by QRIS or cash.
 - **Orders (`/orders`)**: today's orders, with payment for any that are still pending.
@@ -14,6 +48,92 @@ _Crispy outside, happy inside._ A monolith POS + owner dashboard for the Potaton
   - It runs as its own service in [`apps/ai`](apps/ai/README.md).
 
 Built for laptop, iPad (portrait and landscape) and iPhone.
+
+## How it works
+
+```mermaid
+flowchart LR
+  cashier["Cashier<br/>iPad / iPhone"] --> web
+  kitchen["Kitchen screen"] --> web
+  owner["Owner<br/>laptop"] --> web
+  web["apps/web<br/>Next.js 16 · API routes"] --> db[("PostgreSQL<br/>Prisma 7")]
+  web --> s3[("S3 bucket<br/>photos · QRIS")]
+  web -->|"owner's JWT"| ai["apps/ai<br/>Hono · Claude"]
+  ai -->|"read-only SQL"| db
+  web -->|"FCM push"| kitchen
+  web -->|"SMTP"| mail["Invite & voucher emails"]
+```
+
+An order, from the counter to the fryer:
+
+1. The cashier builds the order on the register. The client sends only product and modifier ids, and the server prices everything again from the database.
+2. The register shows a QRIS with the exact amount, or the cashier takes cash.
+3. When the money arrives, the cashier taps **Payment received**. The order is marked paid and written to the activity log.
+4. A push notification goes to the owner and the cashier (amount, method, location) and another to the kitchen (what to cook).
+5. The kitchen screen lists the order until it is ticked off.
+
+### How the assistant reads the database
+
+The assistant is retrieval-augmented, but without a vector store or embeddings. Claude retrieves live numbers by calling tools, and each tool is a fixed, parameterised SQL query that `apps/ai` runs against the same Postgres as the web app. The model picks the tool and its arguments (date range, grouping) but never writes SQL.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Owner
+  participant Web as apps/web<br/>/api/admin/assistant
+  participant AI as apps/ai<br/>POST /chat
+  participant Claude as Claude API
+  participant DB as PostgreSQL
+
+  Owner->>Web: Question (+ up to 3 photos)
+  Web->>DB: Load chat history and instructions
+  Note over Web: Photos are read from S3 and sent as base64
+  Web->>AI: History, photos, instructions + owner's JWT
+  AI->>AI: Verify JWT (owners only)
+  loop Up to 8 rounds
+    AI->>Claude: System prompt + tools + history
+    Claude-->>AI: tool_use, e.g. get_sales_report { from, to, group_by }
+    AI->>DB: Fixed SQL inside BEGIN READ ONLY (10s timeout)
+    DB-->>AI: Aggregated rows, no personal data
+    AI->>Claude: tool_result (JSON)
+  end
+  Note over Claude: web_search runs on Anthropic's side
+  Claude-->>AI: Answer + proposed forms + suggested replies
+  AI-->>Web: { reply, tools, actions, replies }
+  Web->>DB: Save both turns
+  Web-->>Owner: Answer, with editable forms to confirm
+```
+
+| Tool | Tables it reads |
+| --- | --- |
+| `get_business_overview` | `Product`, `ProductVariant`, `Modifier`, `Order`, `Purchase`, `Customer`, `VoucherCampaign` |
+| `get_sales_report` | `Order`, `OrderItem` |
+| `get_product_performance` | `OrderItem`, `Order` |
+| `get_locations` | `Location`, `Order`, `Purchase` |
+| `get_costs` | `Purchase`, `Order` |
+| `get_voucher_performance` | `VoucherCampaign`, `VoucherClaim`, `Order` |
+| `get_customer_insights` | `Customer`, `VoucherClaim` (counts only) |
+
+Why it's safe to point an LLM at the business database:
+
+- **Postgres enforces read-only access.** Every tool runs in a `READ ONLY` transaction, so the database rejects any write. That also makes retrying a dropped connection safe.
+- **No personal data leaves the database.** Customer names, emails and phone numbers are never selected.
+- **Writes need the owner.** `propose_purchases` and `propose_location` only fill in a form. The data is saved through the normal web API when the owner presses **Record** or **Add**.
+
+The tools and prompts are covered in more detail in [`apps/ai/README.md`](apps/ai/README.md). The reasoning behind both diagrams, and the trade-offs, are in [`docs/architecture.md`](docs/architecture.md).
+
+### Repository layout
+
+```
+apps/
+  web/     Next.js app: register, kitchen, dashboard, API routes, Prisma schema
+  ai/      Assistant service: Hono + Anthropic SDK, read-only tools (see apps/ai/README.md)
+packages/
+  eslint-config/       shared ESLint config
+  typescript-config/   shared tsconfig
+```
+
+It is a pnpm + Turborepo monorepo. `pnpm dev`, `pnpm build`, `pnpm lint` and `pnpm check-types` run across every workspace.
 
 ## Stack
 
@@ -207,3 +327,9 @@ All endpoints return JSON. Errors are `{ "error": "<English message>" }`.
 | GET / PUT / DELETE | `/api/admin/assistant/instructions` (DELETE resets to the default) | admin |
 
 Order prices are always recalculated on the server from the database. The client only sends variant and modifier ids. Order items snapshot names and prices, so later menu edits never rewrite sales history.
+
+## License
+
+The source code is released under the [MIT License](LICENSE). Copyright © 2026 Maulana Adil.
+
+The license covers the code only. The Potatoni name, logo and mascot, the menu photos in `apps/web/assets/source/` and the stall's QRIS code (`qris.jpg`, `STATIC_QRIS_PAYLOAD` in `src/lib/qris.ts`) belong to the stall and aren't licensed for reuse. If you run this for your own business, swap in your own brand assets and QRIS before you take a payment.
